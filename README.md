@@ -11,5 +11,7 @@
 - !rate (number from 5-1000)
 
 ### Future updates:
-- Remove the chance of auxillary verbs being replaced (in most cases it doesn't work too well)
+✅ Remove the chance of auxillary verbs being replaced (in most cases it doesn't work too well)
+
+### Soon:
 - Add a !pause command so the user can keep their settings but pause the bot from responding
