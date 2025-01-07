@@ -1,6 +1,6 @@
 ## Personal Buttsbot to replace the depreciated version.
 
-### Twitch chatbot that copy's a user's message, randomly replaces syllables with the word "BUTT" (by default), and spits the message back out (HILARIOUS RIGHT???).
+### Twitch chatbot that copy's a user's message, randomly replaces syllables with the word "BUTT" (by default), and spits the message back out (HILARIOUS RIGHT?!?).
 
 ### Commands:
 - !join - Summons the bot to the user's channel (typed in the bot's chat)
