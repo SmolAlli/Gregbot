@@ -1,4 +1,5 @@
 
+import math
 import os
 from json_funcs import modify_streamer_settings, modify_streamer_values
 from twitchio.ext import commands  # type: ignore
@@ -52,12 +53,16 @@ class Bot(commands.Bot):
 
         if settings and random.randint(1, settings["rate"]) == 1:
             syllable_lists = syllables_split(message.content)
-            butt_num = round(len(syllable_lists) / 8)
+            butt_num = math.ceil(len(syllable_lists) / 8)
+            print(syllable_lists)
 
             for num in range(butt_num):
                 random_word = random.randint(0, len(syllable_lists) - 1)
+                print(random_word)
                 random_syllable = random.randint(
                     0, len(syllable_lists[random_word]) - 1)
+                print(random_syllable)
+                print(syllable_lists[random_word][random_syllable])
                 syllable_lists[random_word][random_syllable] = settings["word"]
 
             await message.channel.send(f'{syllables_to_sentence(syllable_lists)}')
