@@ -1,0 +1,13 @@
+# Ignore environment variables file
+.env
+
+# Ignore Python virtual environment
+*.pyc
+*.pyo
+
+# Ignore pipenv files
+Pipfile
+Pipfile.lock
+
+# Ignore streamer settings
+streamer_settings.json
