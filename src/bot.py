@@ -2,7 +2,7 @@
 import math
 import os
 from json_funcs import modify_streamer_settings, modify_streamer_values
-from aux_verbs import AUX_VERBS
+from aux_verbs import IGNORE_WORDS
 from twitchio.ext import commands  # type: ignore
 import random
 from syllafunc import syllables_split, syllables_to_sentence
@@ -51,16 +51,17 @@ class Bot(commands.Bot):
         # Get or initialize settings for this channel
         channel_name = message.channel.name
         settings = self.channel_settings.get(channel_name)
-
-        if settings and random.randint(1, settings["rate"]) == 1:
+        random_int = random.randint(1, settings["rate"])
+        print('random num:', random_int)
+        if settings and random_int == 1:
             syllable_lists = syllables_split(message.content)
-            butt_num = math.ceil(len(syllable_lists) / 8)
+            butt_num = math.ceil(len(syllable_lists) / 10)
 
             for num in range(butt_num):
                 random_word = random.randint(0, len(syllable_lists) - 1)
                 # ignore aux verbs, they don't work well with the replacement
                 attempts = 0
-                while len(syllable_lists[random_word]) <= 1 and syllable_lists[random_word][0] in AUX_VERBS and attempts < 10:
+                while len(syllable_lists[random_word]) <= 1 and syllable_lists[random_word][0].lower() in IGNORE_WORDS and attempts < 10:
                     random_word = random.randint(0, len(syllable_lists) - 1)
                     attempts += 1
                     if attempts >= 9:
@@ -133,7 +134,7 @@ class Bot(commands.Bot):
                 return
             try:
                 new_rate = int(new_rate)
-                if 1 <= new_rate <= 1000:
+                if 10 <= new_rate <= 1000:
                     settings["rate"] = new_rate
 
                     modify_streamer_values(
@@ -141,9 +142,9 @@ class Bot(commands.Bot):
 
                     await ctx.channel.send(f'Rate set to {new_rate}.')
                 else:
-                    await ctx.channel.send(f'{new_rate} is not a valid rate. Please choose a number between 5 and 1000.')
+                    await ctx.channel.send(f'{new_rate} is not a valid rate. Please choose a number between 10 and 1000.')
             except ValueError:
-                await ctx.channel.send(f'"{new_rate}" is not a valid number. Please enter a valid number between 5 and 1000.')
+                await ctx.channel.send(f'"{new_rate}" is not a valid number. Please enter a valid number between 10 and 1000.')
 
     @commands.command()
     async def buttword(self, ctx: commands.Context, new_word: str = None):
