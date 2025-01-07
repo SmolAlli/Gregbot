@@ -9,7 +9,6 @@ def syllables_split(sentence):
 
     for word in words:
         syllables = s.inserted(word).split('-')
-        print('word', word)
         if word == '\U000e0000':
             continue
         syllable_list.append(syllables)

@@ -2,6 +2,7 @@
 import math
 import os
 from json_funcs import modify_streamer_settings, modify_streamer_values
+from aux_verbs import AUX_VERBS
 from twitchio.ext import commands  # type: ignore
 import random
 from syllafunc import syllables_split, syllables_to_sentence
@@ -54,15 +55,21 @@ class Bot(commands.Bot):
         if settings and random.randint(1, settings["rate"]) == 1:
             syllable_lists = syllables_split(message.content)
             butt_num = math.ceil(len(syllable_lists) / 8)
-            print(syllable_lists)
 
             for num in range(butt_num):
                 random_word = random.randint(0, len(syllable_lists) - 1)
-                print(random_word)
+                # ignore aux verbs, they don't work well with the replacement
+                attempts = 0
+                while len(syllable_lists[random_word]) <= 1 and syllable_lists[random_word][0] in AUX_VERBS and attempts < 10:
+                    random_word = random.randint(0, len(syllable_lists) - 1)
+                    attempts += 1
+                    if attempts >= 9:
+                        print('Could not find a word to replace.')
+                        return
+                print('replacing word', syllable_lists[random_word])
                 random_syllable = random.randint(
                     0, len(syllable_lists[random_word]) - 1)
-                print(random_syllable)
-                print(syllable_lists[random_word][random_syllable])
+
                 syllable_lists[random_word][random_syllable] = settings["word"]
 
             await message.channel.send(f'{syllables_to_sentence(syllable_lists)}')
@@ -126,7 +133,7 @@ class Bot(commands.Bot):
                 return
             try:
                 new_rate = int(new_rate)
-                if 5 <= new_rate <= 1000:
+                if 1 <= new_rate <= 1000:
                     settings["rate"] = new_rate
 
                     modify_streamer_values(
