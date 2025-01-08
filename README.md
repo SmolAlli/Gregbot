@@ -11,11 +11,12 @@
 - !rate (number from 5-1000)
 
 ### Recent Updates:
-- ✅ Remove the chance of auxillary verbs being replaced (in most cases it doesn't work too well)
-- ✅ Improve the illegal word list
-- ✅ Only the streamer can use !buttrate
-- ✅ Global vars for upper/lower buttrate limits and BUTTs per sentence
-- ✅ Better documentation of the message and word/syllable replacement process
+-  Remove the chance of auxillary verbs being replaced (in most cases it doesn't work too well)
+-  Improve the illegal word list
+-  Only the streamer can use !buttrate
+-  Global vars for upper/lower buttrate limits and BUTTs per sentence
+-  Better documentation of the message and word/syllable replacement process
+-  Added a logging feature for each stream that uses the bot. Will help for identifying bugs and fixing any errors.
 
 ### Soon:
 - Add a !pause command so the user can keep their settings but pause the bot from responding
