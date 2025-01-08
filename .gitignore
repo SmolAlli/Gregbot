@@ -5,6 +5,9 @@
 *.pyc
 *.pyo
 
+# Ignore Log files
+*.log
+
 # Ignore pipenv files
 Pipfile
 Pipfile.lock
