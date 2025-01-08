@@ -2,7 +2,7 @@
 import math
 import os
 from json_funcs import modify_streamer_settings, modify_streamer_values
-from aux_verbs import IGNORE_WORDS
+from ignore_these_words import IGNORE_WORDS
 from twitchio.ext import commands  # type: ignore
 import random
 from syllafunc import syllables_split, syllables_to_sentence
@@ -10,9 +10,14 @@ from dotenv import load_dotenv
 import json
 
 load_dotenv()
-
 access_token = os.environ.get('TMI_TOKEN')
+
+# json containing settings for each streamer
 json_data_path = "streamer_settings.json"
+# 1 BUTT per this many words
+BUTT_RATE_PER_SENTENCE = 10
+UPPER_LIMIT_BUTTRATE = 1000
+LOWER_LIMIT_BUTTRATE = 10
 
 
 class Bot(commands.Bot):
@@ -52,15 +57,19 @@ class Bot(commands.Bot):
         channel_name = message.channel.name
         settings = self.channel_settings.get(channel_name)
         random_int = random.randint(1, settings["rate"])
-        print('random num:', random_int)
+        print('random num:', random_int, '| target: 1')
         if settings and random_int == 1:
             syllable_lists = syllables_split(message.content)
-            butt_num = math.ceil(len(syllable_lists) / 10)
+            butt_num = math.ceil(len(syllable_lists) / BUTT_RATE_PER_SENTENCE)
 
             for num in range(butt_num):
+                # pick a random word to replace
                 random_word = random.randint(0, len(syllable_lists) - 1)
-                # ignore aux verbs, they don't work well with the replacement
+                # ignore some words, they don't work well with the BUTT replacement
+                # you can find those words in ignore_these_words.py
                 attempts = 0
+                # if there's only 1 syllable and it's in the ignore list, try a different one
+                # give it a few attempts to find one
                 while len(syllable_lists[random_word]) <= 1 and syllable_lists[random_word][0].lower() in IGNORE_WORDS and attempts < 10:
                     random_word = random.randint(0, len(syllable_lists) - 1)
                     attempts += 1
@@ -68,11 +77,12 @@ class Bot(commands.Bot):
                         print('Could not find a word to replace.')
                         return
                 print('replacing word', syllable_lists[random_word])
+                # pick a random syllable in the word to replace
                 random_syllable = random.randint(
                     0, len(syllable_lists[random_word]) - 1)
-
+                # replace the syllable with the streamer's chosen word
                 syllable_lists[random_word][random_syllable] = settings["word"]
-
+            # Bot sends the new sentence to the chat
             await message.channel.send(f'{syllables_to_sentence(syllable_lists)}')
 
         await self.handle_commands(message)
@@ -127,14 +137,19 @@ class Bot(commands.Bot):
             message_user_name, {"rate": 30, "word": "BUTT"})
 
         if new_rate is None:
+            if message_user_name != channel_name:
+                print(
+                    f'{message_user_name} tried to check the rate of {channel_name}')
+                return
             await ctx.channel.send(f'The current rate is {settings["rate"]}.')
         else:
             if message_user_name != channel_name:
-                await ctx.channel.send(f'You can only change the rate for your own channel.')
+                print(
+                    f'{message_user_name} tried to change the rate of {channel_name}')
                 return
             try:
                 new_rate = int(new_rate)
-                if 10 <= new_rate <= 1000:
+                if LOWER_LIMIT_BUTTRATE <= new_rate <= UPPER_LIMIT_BUTTRATE:
                     settings["rate"] = new_rate
 
                     modify_streamer_values(
