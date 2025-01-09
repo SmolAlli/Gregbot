@@ -14,3 +14,6 @@ Pipfile.lock
 
 # Ignore streamer settings
 streamer_settings.json
+
+# Ignore SSL certificates
+*.pem

@@ -20,22 +20,26 @@ def setup_channel_logger(channel_name: str):
     # Log file in streamer_logs folder
     log_filename = os.path.join("streamer_logs", f"{channel_name}.log")
     logger = logging.getLogger(channel_name)
-    # You can adjust the level (e.g., INFO, WARNING, etc.)
-    logger.setLevel(logging.DEBUG)
 
-    # Create a file handler to write to the channel's log file
-    file_handler = logging.FileHandler(log_filename)
-    file_handler.setLevel(logging.DEBUG)
+    # Check if the logger already has handlers to avoid duplicates
+    if not logger.hasHandlers():
+        # You can adjust the level (e.g., INFO, WARNING, etc.)
+        logger.setLevel(logging.DEBUG)
 
-    # Create a log formatter and attach it to the file handler
-    formatter = logging.Formatter(
-        '%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-    file_handler.setFormatter(formatter)
+        # Create a file handler to write to the channel's log file
+        file_handler = logging.FileHandler(log_filename)
+        file_handler.setLevel(logging.DEBUG)
 
-    # Add the handler to the logger
-    logger.addHandler(file_handler)
+        # Create a log formatter and attach it to the file handler
+        formatter = logging.Formatter(
+            '%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+        file_handler.setFormatter(formatter)
+
+        # Add the handler to the logger
+        logger.addHandler(file_handler)
 
     return logger
+
 
 # This function will return a logger for the specific channel
 
@@ -91,12 +95,10 @@ class Bot(commands.Bot):
 
         # Get logger for the current channel
         logger = get_logger_for_channel(message.channel.name)
-        logger.info(f'{message.author.name} : {message.content}')
 
         channel_name = message.channel.name
         settings = self.channel_settings.get(channel_name)
         random_int = random.randint(1, settings["rate"])
-        logger.info(f'random num: {random_int} | target: 1')
 
         if settings and random_int == 1:
             syllable_lists = syllables_split(message.content)
@@ -109,25 +111,32 @@ class Bot(commands.Bot):
                     random_word = random.randint(0, len(syllable_lists) - 1)
                     attempts += 1
                     if attempts >= 9:
-                        logger.warning('Could not find a word to replace.')
+                        # should rarely ever see this in the logs
+                        logger.warning(
+                            'Could not find a word to replace, skipping message...')
                         return
-                logger.info(f'replacing word {syllable_lists[random_word]}')
+                logger.info(
+                    f'replacing the word {syllable_lists[random_word]}')
                 random_syllable = random.randint(
                     0, len(syllable_lists[random_word]) - 1)
                 syllable_lists[random_word][random_syllable] = settings["word"]
-            await message.channel.send(f'{syllables_to_sentence(syllable_lists)}')
+                logger.info(
+                    f'replacing the syllable {syllable_lists[random_word][random_syllable]}')
+            new_message = syllables_to_sentence(syllable_lists)
+            logger.info(f'{message.author.name}: {new_message}')
+            await message.channel.send(f'{new_message}')
 
         await self.handle_commands(message)
 
-    @commands.command()
-    @commands.cooldown(3, 45, commands.Bucket.user)
+    @ commands.command()
+    @ commands.cooldown(3, 45, commands.Bucket.user)
     async def hello(self, ctx: commands.Context):
         # Get logger for the current channel
         logger = get_logger_for_channel(ctx.channel.name)
-        await ctx.channel.send(f'Hello {ctx.author.name}!')
+        await ctx.channel.send(f'hiii {ctx.author.name}!')
         logger.info(f"Hello command invoked by {ctx.author.name}")
 
-    @commands.command()
+    @ commands.command()
     async def join(self, ctx: commands.Context):
         # Get logger for the current channel
         logger = get_logger_for_channel(ctx.channel.name)
@@ -144,14 +153,16 @@ class Bot(commands.Bot):
         else:
             await ctx.send(f'Already in {channel_name}\'s channel.')
 
-    @commands.command()
+    @ commands.command()
     async def leave(self, ctx: commands.Context):
         # Get logger for the current channel
         logger = get_logger_for_channel(ctx.channel.name)
         channel_name = ctx.author.name
 
         if channel_name != ctx.channel.name:
-            logger.warning(f'Non-host trying to leave channel {channel_name}.')
+            await ctx.send(f'Please use the !leave command in your own channel.')
+            logger.warning(
+                f'Non-host trying to remove me from the channel {channel_name}.')
             return
 
         if channel_name in self.channel_settings:
@@ -165,7 +176,7 @@ class Bot(commands.Bot):
         else:
             await ctx.send(f'The bot is not currently in {channel_name}\'s channel.')
 
-    @commands.command()
+    @ commands.command()
     async def buttrate(self, ctx: commands.Context, new_rate: str = None):
         # Get logger for the current channel
         logger = get_logger_for_channel(ctx.channel.name)
@@ -176,7 +187,7 @@ class Bot(commands.Bot):
 
         if new_rate is None:
             if message_user_name != channel_name:
-                logger.warning(
+                logger.info(
                     f'{message_user_name} tried to check the rate of {channel_name}')
                 return
             await ctx.channel.send(f'The current rate is {settings["rate"]}.')
@@ -201,7 +212,7 @@ class Bot(commands.Bot):
                 await ctx.channel.send(f'"{new_rate}" is not a valid number. Please enter a valid number between 10 and 1000.')
                 logger.warning(f"Invalid rate input: {new_rate}")
 
-    @commands.command()
+    @ commands.command()
     async def buttword(self, ctx: commands.Context, new_word: str = None):
         # Get logger for the current channel
         logger = get_logger_for_channel(ctx.channel.name)
