@@ -8,7 +8,7 @@
 - !buttword - Displays the current word being used ('BUTT' is DEFAULT)
 - !buttword (word) - replaces the current word with the newly typed one
 - !rate - Displays the rate at how many messages will pass before you can expect a response (30 is DEFAULT)
-- !rate (number from 5-1000)
+- !rate (number from 10-1000)
 
 ### Recent Updates:
 -  Remove the chance of auxillary verbs being replaced (in most cases it doesn't work too well)
