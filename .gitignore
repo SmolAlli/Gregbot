@@ -17,3 +17,8 @@ streamer_settings.json
 
 # Ignore SSL certificates
 *.pem
+
+# Ignore ec2_logs
+ec2_logs
+*.ps1
+*.sh

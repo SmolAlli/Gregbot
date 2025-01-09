@@ -111,20 +111,20 @@ class Bot(commands.Bot):
                     random_word = random.randint(0, len(syllable_lists) - 1)
                     attempts += 1
                     if attempts >= 9:
-                        # should rarely ever see this in the logs
                         logger.warning(
                             'Could not find a word to replace, skipping message...')
                         return
+
+                # Only log the word replacement once, not as word and syllable separately
                 logger.info(
-                    f'replacing the word {syllable_lists[random_word]}')
+                    f'replacing word {syllable_lists[random_word]} with \'{settings["word"]}\' in the message \'{message.content}\' written by {message.author.name}')
+
+                # Perform the replacement
                 random_syllable = random.randint(
                     0, len(syllable_lists[random_word]) - 1)
                 syllable_lists[random_word][random_syllable] = settings["word"]
-                logger.info(
-                    f'replacing the syllable {syllable_lists[random_word][random_syllable]}')
-            new_message = syllables_to_sentence(syllable_lists)
-            logger.info(f'{message.author.name}: {new_message}')
-            await message.channel.send(f'{new_message}')
+
+            await message.channel.send(f'{syllables_to_sentence(syllable_lists)}')
 
         await self.handle_commands(message)
 
