@@ -20,5 +20,5 @@
 
 ### Soon:
 - Add a !pause command so the user can keep their settings but pause the bot from responding
-- Better word/syllable selection for multiple BUTTs in a sentence (i.e. make sure they aren't side by side)
-- Handle strings that have symbols attached to them better (might need to look into other ways/packages)
+- Better word/syllable selection for multiple BUTTs in a sentence (i.e. make sure they aren't side by side). Might need to look into other ways/packages
+- Handle strings that have symbols attached to them better 
