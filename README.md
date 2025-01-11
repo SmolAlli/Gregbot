@@ -18,7 +18,9 @@
 -  Better documentation of the message and word/syllable replacement process
 -  Added a logging feature for each stream that uses the bot. Will help for identifying bugs and fixing any errors.
 
-### Soon:
+### Soon/To-Do:
 - Add a !pause command so the user can keep their settings but pause the bot from responding
 - Better word/syllable selection for multiple BUTTs in a sentence (i.e. make sure they aren't side by side). Might need to look into other ways/packages
-- Handle strings that have symbols attached to them better 
+- Handle strings that have symbols attached to them better
+- Maybe have cases for specific words that get replaced
+- Handle plurals
