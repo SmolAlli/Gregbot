@@ -14,8 +14,6 @@ if not os.path.exists("streamer_logs"):
     os.makedirs("streamer_logs")
 
 # Function to set up a logger for a specific channel, saving logs in streamer_logs folder
-
-
 def setup_channel_logger(channel_name: str):
     # Log file in streamer_logs folder
     log_filename = os.path.join("streamer_logs", f"{channel_name}.log")
@@ -42,26 +40,28 @@ def setup_channel_logger(channel_name: str):
 
 
 # This function will return a logger for the specific channel
-
-
 def get_logger_for_channel(channel_name: str):
     return setup_channel_logger(channel_name)
 
-
 load_dotenv()
 access_token = os.environ.get('TMI_TOKEN')
+nick = os.environ.get('BOT_NICKNAME')
+prefix = os.environ.get('BOT_PREFIX')
 
 # json containing settings for each streamer
 json_data_path = "streamer_settings.json"
+# JSON containing list of ignored users
+ignored_list_path = "ignored.json"
+
 BUTT_RATE_PER_SENTENCE = 10
 UPPER_LIMIT_BUTTRATE = 1000
 LOWER_LIMIT_BUTTRATE = 10
-
+DEFAULT_BUTT_INFO = {"rate": 30, "word": "BUTT"}
 
 class Bot(commands.Bot):
 
     def __init__(self, data: dict):
-        super().__init__(token=access_token, prefix='!', initial_channels=list(data.keys()))
+        super().__init__(token=access_token, prefix=prefix, initial_channels=list(data.keys()))
         self.channel_settings: dict = data
 
     async def event_ready(self):
@@ -73,7 +73,7 @@ class Bot(commands.Bot):
         if self.nick not in self.channel_settings:
             logger.info(
                 f'Adding bot {self.nick} to settings with default values...')
-            self.channel_settings[self.nick] = {"rate": 30, "word": "BUTT"}
+            self.channel_settings[self.nick] = DEFAULT_BUTT_INFO
 
             modify_streamer_settings(json_data_path, "add", {
                                      self.nick: self.channel_settings[self.nick]})
@@ -143,7 +143,7 @@ class Bot(commands.Bot):
         channel_name = ctx.author.name
 
         if channel_name not in self.channel_settings:
-            self.channel_settings[channel_name] = {"rate": 30, "word": "BUTT"}
+            self.channel_settings[channel_name] = DEFAULT_BUTT_INFO
             modify_streamer_settings(json_data_path, "add", {
                                      channel_name: self.channel_settings.get(channel_name)})
 
@@ -183,7 +183,7 @@ class Bot(commands.Bot):
         message_user_name = ctx.author.name
         channel_name = ctx.channel.name
         settings = self.channel_settings.setdefault(
-            message_user_name, {"rate": 30, "word": "BUTT"})
+            message_user_name, DEFAULT_BUTT_INFO)
 
         if new_rate is None:
             if message_user_name != channel_name:
@@ -218,7 +218,7 @@ class Bot(commands.Bot):
         logger = get_logger_for_channel(ctx.channel.name)
         channel_name = ctx.channel.name
         settings = self.channel_settings.setdefault(
-            channel_name, {"rate": 30, "word": "BUTT"})
+            channel_name, DEFAULT_BUTT_INFO)
 
         if new_word is None:
             await ctx.channel.send(f'The current word for this channel is {settings["word"]}.')
@@ -242,6 +242,7 @@ def main():
             settings = json.load(json_file)
     else:
         settings = {}
+        settings[nick] = DEFAULT_BUTT_INFO
 
     # You can set up a general logger for the bot if needed
     logger = get_logger_for_channel("bot")
