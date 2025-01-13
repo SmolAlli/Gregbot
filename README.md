@@ -1,6 +1,6 @@
 ## Personal Buttsbot to replace the depreciated version.
 
-### Twitch chatbot that copy's a random user's message, randomly replaces syllables with the word "BUTT" (by default), and spits the message back out (HILARIOUS RIGHT?!?).
+### Twitch chatbot that copy's a random user's message, randomly replaces syllables with the word "BUTT" (by default), and spits the message back out.
 
 ### Commands:
 - !join - Summons the bot to the user's channel (typed in the bot's chat)
@@ -30,4 +30,5 @@
 ## Running
 
 -   Install dependencies with `pip install -r requirements.txt`
+-   Setup your .env file with your channel's token/names (refer to the .env sample file)
 -   Run with `py bot.py`
