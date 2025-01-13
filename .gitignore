@@ -11,8 +11,9 @@
 # Ignore pipenv files
 Pipfile.lock
 
-# Ignore streamer settings
+# Ignore generated JSON files
 streamer_settings.json
+ignored.json
 
 # Ignore SSL certificates
 *.pem
@@ -21,3 +22,6 @@ streamer_settings.json
 ec2_logs
 *.ps1
 *.sh
+
+# Ignore pycache
+__pycache__
