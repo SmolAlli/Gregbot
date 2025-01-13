@@ -2,46 +2,16 @@ import math
 import os
 from json_funcs import modify_streamer_settings, modify_streamer_values, add_ignore_list, remove_ignore_list, open_file
 from ignore_these_words import IGNORE_WORDS
+from logging_funcs import get_logger_for_channel
 from twitchio.ext import commands  # type: ignore
 import random
 from syllafunc import syllables_split, syllables_to_sentence
 from dotenv import load_dotenv
 import json
-import logging
 
 # Create a folder for logs if it doesn't exist
 if not os.path.exists("streamer_logs"):
     os.makedirs("streamer_logs")
-
-# Function to set up a logger for a specific channel, saving logs in streamer_logs folder
-def setup_channel_logger(channel_name: str):
-    # Log file in streamer_logs folder
-    log_filename = os.path.join("streamer_logs", f"{channel_name}.log")
-    logger = logging.getLogger(channel_name)
-
-    # Check if the logger already has handlers to avoid duplicates
-    if not logger.hasHandlers():
-        # You can adjust the level (e.g., INFO, WARNING, etc.)
-        logger.setLevel(logging.DEBUG)
-
-        # Create a file handler to write to the channel's log file
-        file_handler = logging.FileHandler(log_filename)
-        file_handler.setLevel(logging.DEBUG)
-
-        # Create a log formatter and attach it to the file handler
-        formatter = logging.Formatter(
-            '%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-        file_handler.setFormatter(formatter)
-
-        # Add the handler to the logger
-        logger.addHandler(file_handler)
-
-    return logger
-
-
-# This function will return a logger for the specific channel
-def get_logger_for_channel(channel_name: str):
-    return setup_channel_logger(channel_name)
 
 # Load up the .env files
 load_dotenv()
@@ -63,7 +33,8 @@ DEFAULT_BUTT_INFO = {"rate": 30, "word": "BUTT"}
 class Bot(commands.Bot):
 
     def __init__(self, data: dict):
-        super().__init__(token=access_token, prefix=prefix, initial_channels=list(data.keys()))
+        super().__init__(token=access_token, prefix=prefix,
+                         initial_channels=list(data.keys()))
         self.channel_settings: dict = data
 
     async def event_ready(self):
@@ -109,13 +80,15 @@ class Bot(commands.Bot):
 
             if settings and random_int == 1:
                 syllable_lists = syllables_split(message.content)
-                butt_num = math.ceil(len(syllable_lists) / BUTT_RATE_PER_SENTENCE)
+                butt_num = math.ceil(
+                    len(syllable_lists) / BUTT_RATE_PER_SENTENCE)
 
                 for num in range(butt_num):
                     random_word = random.randint(0, len(syllable_lists) - 1)
                     attempts = 0
                     while len(syllable_lists[random_word]) <= 1 and syllable_lists[random_word][0].lower() in IGNORE_WORDS and attempts < 10:
-                        random_word = random.randint(0, len(syllable_lists) - 1)
+                        random_word = random.randint(
+                            0, len(syllable_lists) - 1)
                         attempts += 1
                         if attempts >= 9:
                             logger.warning(
@@ -241,7 +214,7 @@ class Bot(commands.Bot):
             await ctx.channel.send(f'Word for this channel changed to {settings["word"]}.')
             logger.info(
                 f"Word changed to {settings['word']} for channel: {channel_name}")
-    
+
     @ commands.command()
     async def ignoreme(self, ctx: commands.Context):
         # Get logger for the current channel
