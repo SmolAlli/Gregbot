@@ -170,7 +170,7 @@ class Bot(commands.Bot):
                 logger.info(
                     f'{message_user_name} tried to check the rate of {channel_name}')
                 return
-            await ctx.channel.send(f'The current rate is {settings["rate"]}.')
+            await ctx.channel.send(f'The current rate is 1/{settings["rate"]}.')
             logger.info(f"Checked rate: {settings['rate']}")
         else:
             if message_user_name != channel_name:
