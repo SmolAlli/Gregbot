@@ -106,12 +106,14 @@ class Bot(commands.Bot):
                     # Choose a different syllable if the syllable is only 1 character
                     attempts = 0
                     while len(syllable_lists[random_word][random_syllable]) == 1 and attempts < 5:
-                        random_syllable = random.randint(0, len(syllable_lists[random_word]) - 1)
+                        random_syllable = random.randint(
+                            0, len(syllable_lists[random_word]) - 1)
+                        attempts += 1
                         if attempts >= 4:
                             logger.warning(
                                 'Could not find a syllable to replace, skipping message...')
                             return
-                    
+
                     syllable_lists[random_word][random_syllable] = settings["word"]
 
                 await message.channel.send(f'{syllables_to_sentence(syllable_lists)}')
