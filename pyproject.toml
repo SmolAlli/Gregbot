@@ -1,0 +1,12 @@
+[tool.autopep8]
+max_line_length = 120
+
+[tool.pylint.'MESSAGES CONTROL']
+max-line-length = 120
+disable = """
+    missing-module-docstring,
+    missing-class-docstring,
+    missing-function-docstring,
+    logging-fstring-interpolation,
+    logging-not-lazy
+"""
