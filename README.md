@@ -33,6 +33,7 @@
 
 ## Running
 
+-   Use python >=3.9
 -   Install dependencies with `pip install -r requirements.txt`
 -   Setup your .env file with your channel's token/names (refer to the .env sample file)
 -   Run with `py bot.py`

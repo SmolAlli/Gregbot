@@ -25,3 +25,6 @@ ec2_logs
 
 # Ignore pycache
 __pycache__
+
+# Ignore logs
+streamer_logs
