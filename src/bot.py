@@ -91,13 +91,10 @@ class Bot(commands.Bot):
 
             # grab the butt rate for the channel
             butt_rate = settings["rate"]
-            # print(f'current butt rate: {butt_rate}')
 
             # calculate the final butt rate for the channel
             # once the missed message count exceeds the butt rate, the bot will have an increased chance of responding
             final_butt_rate = butt_rate - max(missed_messages - butt_rate, 0)
-            # print(f'calculated butt rate: {final_butt_rate}')
-            # print('-----------------------------------')
 
             random_int = random.randint(1, final_butt_rate)
 
@@ -109,9 +106,9 @@ class Bot(commands.Bot):
                 for _ in range(butt_num):
                     random_word = random.randint(0, len(syllable_lists) - 1)
                     attempts = 0
-                    while all(len(syllable_lists[random_word]) <= 1,
+                    while all([len(syllable_lists[random_word]) <= 1,
                               syllable_lists[random_word][0].lower() in IGNORE_WORDS,
-                              attempts < 10):
+                              attempts < 10]):
                         random_word = random.randint(
                             0, len(syllable_lists) - 1)
                         attempts += 1
@@ -148,11 +145,6 @@ class Bot(commands.Bot):
             else:
                 # increment the missed messages for the channel
                 self.missed_messages[channel_name] += 1
-                # print(f'current missed messages: {missed_messages}')
-        # For ignored users, still increment missed_messages count
-        if is_ignored:
-            self.missed_messages[channel_name] += 1
-            # print(f'current missed messages: {missed_messages}')
 
         await self.handle_commands(message)
 
