@@ -1,13 +1,13 @@
 import math
 import os
+import random
+import json
+from dotenv import load_dotenv
+from twitchio.ext import commands  # type: ignore
 from json_funcs import modify_streamer_settings, modify_streamer_values, add_ignore_list, remove_ignore_list, open_file
 from ignore_these_words import IGNORE_WORDS
 from logging_funcs import get_logger_for_channel
-from twitchio.ext import commands  # type: ignore
-import random
 from syllafunc import syllables_split, syllables_to_sentence
-from dotenv import load_dotenv
-import json
 
 # Create a folder for logs if it doesn't exist
 if not os.path.exists("streamer_logs"):
@@ -20,9 +20,9 @@ nick = os.environ.get('BOT_NICKNAME')
 prefix = os.environ.get('BOT_PREFIX')
 
 # JSON containing settings for each streamer
-json_data_path = "streamer_settings.json"
+JSON_DATA_PATH = "streamer_settings.json"
 # JSON containing list of ignored users
-ignored_list_path = "ignored.json"
+IGNORED_LIST_PATH = "ignored.json"
 
 BUTT_RATE_PER_SENTENCE = 10
 UPPER_LIMIT_BUTTRATE = 1000
@@ -31,7 +31,6 @@ DEFAULT_BUTT_INFO = {"rate": 30, "word": "BUTT"}
 
 
 class Bot(commands.Bot):
-
     def __init__(self, data: dict):
         super().__init__(token=access_token, prefix=prefix,
                          initial_channels=list(data.keys()))
@@ -48,19 +47,20 @@ class Bot(commands.Bot):
                 f'Adding bot {self.nick} to settings with default values...')
             self.channel_settings[self.nick] = DEFAULT_BUTT_INFO
 
-            modify_streamer_settings(json_data_path, "add", {
+            modify_streamer_settings(JSON_DATA_PATH, "add", {
                                      self.nick: self.channel_settings[self.nick]})
 
         logger.info(
             f'channels connected to: {list(self.channel_settings.keys())}')
 
-    async def event_command_error(self, ctx, error: Exception) -> None:
+    async def event_command_error(self, context, error: Exception) -> None:
         # Get logger for the current channel
-        logger = get_logger_for_channel(ctx.channel.name)
+        logger = get_logger_for_channel(context.channel.name)
         if isinstance(error, commands.CommandOnCooldown):
-            await ctx.channel.send(f'Wait a couple of seconds before sending something else, {ctx.author.name}!')
+            await context.channel.send(
+                f'Wait a couple of seconds before sending something else, {context.author.name}!')
             logger.warning(
-                f'Command on cooldown: {ctx.command.name} from {ctx.author.name}')
+                f'Command on cooldown: {context.command.name} from {context.author.name}')
 
     async def event_message(self, message):
         if message.echo:
@@ -70,7 +70,7 @@ class Bot(commands.Bot):
         logger = get_logger_for_channel(message.channel.name)
 
         # Check if the user is in the ignored list
-        ignored_list = open_file(ignored_list_path, [])
+        ignored_list = open_file(IGNORED_LIST_PATH, [])
 
         # Only allow for the replacement code to run if user isn't ignored
         if message.author.name not in ignored_list:
@@ -83,10 +83,12 @@ class Bot(commands.Bot):
                 butt_num = math.ceil(
                     len(syllable_lists) / BUTT_RATE_PER_SENTENCE)
 
-                for num in range(butt_num):
+                for _ in range(butt_num):
                     random_word = random.randint(0, len(syllable_lists) - 1)
                     attempts = 0
-                    while len(syllable_lists[random_word]) <= 1 and syllable_lists[random_word][0].lower() in IGNORE_WORDS and attempts < 10:
+                    while all(len(syllable_lists[random_word]) <= 1,
+                              syllable_lists[random_word][0].lower() in IGNORE_WORDS,
+                              attempts < 10):
                         random_word = random.randint(
                             0, len(syllable_lists) - 1)
                         attempts += 1
@@ -97,7 +99,8 @@ class Bot(commands.Bot):
 
                     # Only log the word replacement once, not as word and syllable separately
                     logger.info(
-                        f'replacing word {syllable_lists[random_word]} with \'{settings["word"]}\' in the message \'{message.content}\' written by {message.author.name}')
+                        f"replacing word {syllable_lists[random_word]} with \'{settings["word"]}\'in the message " +
+                        "\'{message.content}\' written by {message.author.name}")
 
                     # Perform the replacement
                     random_syllable = random.randint(
@@ -136,7 +139,7 @@ class Bot(commands.Bot):
 
         if channel_name not in self.channel_settings:
             self.channel_settings[channel_name] = DEFAULT_BUTT_INFO
-            modify_streamer_settings(json_data_path, "add", {
+            modify_streamer_settings(JSON_DATA_PATH, "add", {
                                      channel_name: self.channel_settings.get(channel_name)})
 
             await ctx.send(f'Joining {channel_name}\'s channel')
@@ -152,13 +155,13 @@ class Bot(commands.Bot):
         channel_name = ctx.author.name
 
         if channel_name != ctx.channel.name:
-            await ctx.send(f'Please use the !leave command in your own channel.')
+            await ctx.send('Please use the !leave command in your own channel.')
             logger.warning(
                 f'Non-host trying to remove me from the channel {channel_name}.')
             return
 
         if channel_name in self.channel_settings:
-            modify_streamer_settings(json_data_path, "rm", {
+            modify_streamer_settings(JSON_DATA_PATH, "rm", {
                                      channel_name: self.channel_settings[channel_name]})
             del self.channel_settings[channel_name]
 
@@ -194,14 +197,16 @@ class Bot(commands.Bot):
                 if LOWER_LIMIT_BUTTRATE <= new_rate <= UPPER_LIMIT_BUTTRATE:
                     settings["rate"] = new_rate
                     modify_streamer_values(
-                        json_data_path, message_user_name, "rate", new_rate)
+                        JSON_DATA_PATH, message_user_name, "rate", new_rate)
                     await ctx.channel.send(f'Rate set to {new_rate}.')
                     logger.info(
                         f"Rate set to {new_rate} for channel: {channel_name}")
                 else:
-                    await ctx.channel.send(f'{new_rate} is not a valid rate. Please choose a number between 10 and 1000.')
+                    await ctx.channel.send(
+                        f'{new_rate} is not a valid rate. Please choose a number between 10 and 1000.')
             except ValueError:
-                await ctx.channel.send(f'"{new_rate}" is not a valid number. Please enter a valid number between 10 and 1000.')
+                await ctx.channel.send(
+                    f'"{new_rate}" is not a valid number. Please enter a valid number between 10 and 1000.')
                 logger.warning(f"Invalid rate input: {new_rate}")
 
     @ commands.command()
@@ -216,13 +221,13 @@ class Bot(commands.Bot):
             await ctx.channel.send(f'The current word for this channel is {settings["word"]}.')
         else:
             if channel_name != ctx.author.name:
-                await ctx.channel.send(f'You can only change the word for your own channel.')
+                await ctx.channel.send('You can only change the word for your own channel.')
                 logger.warning(
                     f"{ctx.author.name} tried to change the word for {channel_name}")
                 return
             settings["word"] = new_word
             modify_streamer_values(
-                json_data_path, channel_name, "word", new_word)
+                JSON_DATA_PATH, channel_name, "word", new_word)
             await ctx.channel.send(f'Word for this channel changed to {settings["word"]}.')
             logger.info(
                 f"Word changed to {settings['word']} for channel: {channel_name}")
@@ -234,7 +239,7 @@ class Bot(commands.Bot):
         user_to_ignore = ctx.author.name
 
         # Adds user to the ignore list
-        worked = add_ignore_list(ignored_list_path, user_to_ignore)
+        worked = add_ignore_list(IGNORED_LIST_PATH, user_to_ignore)
         if worked:
             await ctx.channel.send(f'User {user_to_ignore} has been successfully ignored.')
             logger.info(f"User {user_to_ignore} ignored")
@@ -248,7 +253,7 @@ class Bot(commands.Bot):
         user_to_ignore = ctx.author.name
 
         # Removes user from the ignore list
-        worked = remove_ignore_list(ignored_list_path, user_to_ignore)
+        worked = remove_ignore_list(IGNORED_LIST_PATH, user_to_ignore)
         if worked:
             await ctx.channel.send(f'User {user_to_ignore} has been successfully unignored.')
             logger.info(f"User {user_to_ignore} unignored")
@@ -257,8 +262,8 @@ class Bot(commands.Bot):
 
 
 def main():
-    if os.path.exists(json_data_path):
-        with open(json_data_path, "r") as json_file:
+    if os.path.exists(JSON_DATA_PATH):
+        with open(JSON_DATA_PATH, "r", encoding="utf8") as json_file:
             settings = json.load(json_file)
     else:
         settings = {}
@@ -267,7 +272,7 @@ def main():
     # You can set up a general logger for the bot if needed
     logger = get_logger_for_channel("bot")
     logger.info(f'current settings: {settings}')
-    logger.info(f'successfully loaded settings...')
+    logger.info('successfully loaded settings...')
     bot = Bot(settings)
     bot.run()
 
