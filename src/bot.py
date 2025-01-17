@@ -80,10 +80,8 @@ class Bot(commands.Bot):
 
         # Check if the user is ignored
         ignored_list = open_file(IGNORED_LIST_PATH, [])
-        is_ignored = message.author.name in ignored_list
 
-        if not is_ignored:
-
+        if message.author.name not in ignored_list:
             # grab the channel's settings
             settings = self.channel_settings.get(channel_name)
             # grab the current missed message count for the channel
