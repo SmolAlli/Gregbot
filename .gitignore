@@ -5,9 +5,23 @@
 *.pyc
 *.pyo
 
+# Ignore Log files
+*.log
+
 # Ignore pipenv files
-Pipfile
 Pipfile.lock
 
-# Ignore streamer settings
+# Ignore generated JSON files
 streamer_settings.json
+ignored.json
+
+# Ignore SSL certificates
+*.pem
+
+# Ignore ec2_logs
+ec2_logs
+*.ps1
+*.sh
+
+# Ignore pycache
+__pycache__
