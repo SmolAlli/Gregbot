@@ -2,6 +2,7 @@ import math
 import os
 import random
 import json
+from typing import Dict
 from dotenv import load_dotenv
 from twitchio.ext import commands  # type: ignore
 from json_funcs import modify_streamer_settings, modify_streamer_values, add_ignore_list, remove_ignore_list, open_file
@@ -35,6 +36,7 @@ class Bot(commands.Bot):
         super().__init__(token=access_token, prefix=prefix,
                          initial_channels=list(data.keys()))
         self.channel_settings: dict = data
+        self.missed_messages: Dict[str, int] = {}
 
     async def event_ready(self):
         # Get logger for the bot's channel
@@ -63,20 +65,36 @@ class Bot(commands.Bot):
                 f'Command on cooldown: {context.command.name} from {context.author.name}')
 
     async def event_message(self, message):
+        channel_name = message.channel.name
+
         if message.echo:
             return
+
+        # check if missed_messages has the channel name as a key
+        if channel_name not in self.missed_messages:
+            # add the channel name as a key and set the value to 0
+            self.missed_messages[channel_name] = 0
 
         # Get logger for the current channel
         logger = get_logger_for_channel(message.channel.name)
 
-        # Check if the user is in the ignored list
+        # Check if the user is ignored
         ignored_list = open_file(IGNORED_LIST_PATH, [])
 
-        # Only allow for the replacement code to run if user isn't ignored
         if message.author.name not in ignored_list:
-            channel_name = message.channel.name
+            # grab the channel's settings
             settings = self.channel_settings.get(channel_name)
-            random_int = random.randint(1, settings["rate"])
+            # grab the current missed message count for the channel
+            missed_messages = self.missed_messages[channel_name]
+
+            # grab the butt rate for the channel
+            butt_rate = settings["rate"]
+
+            # calculate the final butt rate for the channel
+            # once the missed message count exceeds the butt rate, the bot will have an increased chance of responding
+            final_butt_rate = butt_rate - max(missed_messages - butt_rate, 0)
+
+            random_int = random.randint(1, final_butt_rate)
 
             if settings and random_int == 1:
                 syllable_lists = syllables_split(message.content)
@@ -86,9 +104,9 @@ class Bot(commands.Bot):
                 for _ in range(butt_num):
                     random_word = random.randint(0, len(syllable_lists) - 1)
                     attempts = 0
-                    while all(len(syllable_lists[random_word]) <= 1,
+                    while all([len(syllable_lists[random_word]) <= 1,
                               syllable_lists[random_word][0].lower() in IGNORE_WORDS,
-                              attempts < 10):
+                              attempts < 10]):
                         random_word = random.randint(
                             0, len(syllable_lists) - 1)
                         attempts += 1
@@ -120,6 +138,11 @@ class Bot(commands.Bot):
                     syllable_lists[random_word][random_syllable] = settings["word"]
 
                 await message.channel.send(f'{syllables_to_sentence(syllable_lists)}')
+                # set missed messages for channel back to 0
+                self.missed_messages[channel_name] = 0
+            else:
+                # increment the missed messages for the channel
+                self.missed_messages[channel_name] += 1
 
         await self.handle_commands(message)
 
