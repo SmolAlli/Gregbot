@@ -1,7 +1,8 @@
-import pyphen
 import re
+import pyphen
 
 s = pyphen.Pyphen(lang='en')
+
 
 def syllables_split(sentence: str):
     words = sentence.split()
@@ -21,11 +22,11 @@ def syllables_split(sentence: str):
             split = re.findall(regex, re.escape(syllable))
 
             # Fixes the \\ being messed up from re.escape
-            for i in range(len(split)):
-                split[i] = re.sub(r'\\(.)', r'\1', split[i])
+            for i, e in enumerate(split):
+                split[i] = re.sub(r'\\(.)', r'\1', e)
             # Adds the split array to the syllables and punctuation array
             syllables_punctuation = syllables_punctuation + split
-        
+
         syllable_list.append(syllables_punctuation)
 
     return syllable_list
