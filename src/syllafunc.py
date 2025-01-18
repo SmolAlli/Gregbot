@@ -1,7 +1,11 @@
 import re
 import pyphen
+from regex_funcs import LETTERS_REGEX, PUNCTUATION_REGEX, fix_re_escape
 
 s = pyphen.Pyphen(lang='en')
+
+
+REGEX = PUNCTUATION_REGEX + r"|" + LETTERS_REGEX + r"+"
 
 
 def syllables_split(sentence: str):
@@ -16,14 +20,13 @@ def syllables_split(sentence: str):
         # Separate punctuation to be separate grammatically
         syllables_punctuation = []
         for syllable in syllables:
-            # Gets both words and punctuation
-            regex = r"\w+|[^\w\s]+"
             # Splits words and punctuation
-            split = re.findall(regex, re.escape(syllable))
+            split = re.findall(REGEX, re.escape(syllable))
 
             # Fixes the \\ being messed up from re.escape
             for i, e in enumerate(split):
-                split[i] = re.sub(r'\\(.)', r'\1', e)
+                split[i] = fix_re_escape(e)
+
             # Adds the split array to the syllables and punctuation array
             syllables_punctuation = syllables_punctuation + split
 
