@@ -23,6 +23,7 @@
 - Added a logging feature for each stream that uses the bot. Will help for identifying bugs and fixing any errors.
 - Handle strings that have symbols attached to them better (also won't replace single-symbol syllables)
 - Protection to prevent the bot from getting too unlucky (If the rate is 1/30 messages and the rate has been passed, every next chat message will lower the rate by 1 until the bot responds)
+- Handle plurals
 
 ### Soon/To-Do/Ideas:
 
@@ -32,7 +33,6 @@
 - Allow the streamer to set specific words
 - Allow chatters to favorite a previous generated sentence
 - Command to show a chatter how many times the bot has gotten them
-- Handle plurals
 - single word messages get ignored if under 3 syllables ignoring punctuation
 - capitalisation match what is replaced
 - ignore other bots(?)
