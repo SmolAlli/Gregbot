@@ -35,6 +35,7 @@
 - Handle plurals
 - single word messages get ignored if under 3 syllables ignoring punctuation
 - capitalisation match what is replaced
+- ignore other bots(?)
 
 ## Running
 
