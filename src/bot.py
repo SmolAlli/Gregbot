@@ -8,6 +8,8 @@ from twitchio.ext import commands  # type: ignore
 from json_funcs import modify_streamer_settings, modify_streamer_values, add_ignore_list, remove_ignore_list, open_file
 from ignore_these_words import IGNORE_WORDS
 from logging_funcs import get_logger_for_channel
+from plural_funcs import get_buttword_plural,  get_syllables_no_punctuation
+from regex_funcs import is_punctuation
 from syllafunc import syllables_split, syllables_to_sentence
 
 # Create a folder for logs if it doesn't exist
@@ -79,9 +81,7 @@ class Bot(commands.Bot):
         logger = get_logger_for_channel(message.channel.name)
 
         # Check if the user is ignored
-        ignored_list = open_file(IGNORED_LIST_PATH, [])
-
-        if message.author.name not in ignored_list:
+        if message.author.name not in open_file(IGNORED_LIST_PATH, []):
             # grab the channel's settings
             settings = self.channel_settings.get(channel_name)
             # grab the current missed message count for the channel
@@ -94,9 +94,7 @@ class Bot(commands.Bot):
             # once the missed message count exceeds the butt rate, the bot will have an increased chance of responding
             final_butt_rate = butt_rate - max(missed_messages - butt_rate, 0)
 
-            random_int = random.randint(1, final_butt_rate)
-
-            if settings and random_int == 1:
+            if settings and random.randint(1, final_butt_rate) == 1:
                 syllable_lists = syllables_split(message.content)
                 butt_num = math.ceil(
                     len(syllable_lists) / BUTT_RATE_PER_SENTENCE)
@@ -105,37 +103,47 @@ class Bot(commands.Bot):
                     random_word = random.randint(0, len(syllable_lists) - 1)
                     attempts = 0
                     while all([len(syllable_lists[random_word]) <= 1,
-                              syllable_lists[random_word][0].lower() in IGNORE_WORDS,
-                              attempts < 10]):
+                              "".join(get_syllables_no_punctuation(
+                                  syllable_lists[random_word])).lower() in IGNORE_WORDS,
+                               attempts < 10]):
                         random_word = random.randint(
                             0, len(syllable_lists) - 1)
                         attempts += 1
                         if attempts >= 9:
                             logger.warning(
                                 'Could not find a word to replace, skipping message...')
+                            # Missed a message, increment
+                            self.missed_messages[channel_name] += 1
+
                             return
 
                     # Only log the word replacement once, not as word and syllable separately
                     logger.info(
-                        f"replacing word {syllable_lists[random_word]} with \'{settings["word"]}\'in the message " +
-                        "\'{message.content}\' written by {message.author.name}")
+                        f"replacing word {syllable_lists[random_word]} with \'{settings["word"]}\' in the message " +
+                        f"\'{message.content}\' written by {message.author.name}")
 
                     # Perform the replacement
                     random_syllable = random.randint(
                         0, len(syllable_lists[random_word]) - 1)
-
                     # Choose a different syllable if the syllable is only 1 character
                     attempts = 0
-                    while len(syllable_lists[random_word][random_syllable]) == 1 and attempts < 5:
+                    while len(syllable_lists[random_word][random_syllable]) == 1 or \
+                            is_punctuation(syllable_lists[random_word][random_syllable]):
+                        print(syllable_lists[random_word][random_syllable])
                         random_syllable = random.randint(
                             0, len(syllable_lists[random_word]) - 1)
                         attempts += 1
                         if attempts >= 4:
                             logger.warning(
                                 'Could not find a syllable to replace, skipping message...')
+                            # Missed a message, increment
+                            self.missed_messages[channel_name] += 1
                             return
+                    print(syllable_lists[random_word][random_syllable])
 
-                    syllable_lists[random_word][random_syllable] = settings["word"]
+                    # Check if the given syllable should be plural
+                    syllable_lists[random_word][random_syllable] = get_buttword_plural(
+                        settings["word"], syllable_lists[random_word], random_syllable)
 
                 await message.channel.send(f'{syllables_to_sentence(syllable_lists)}')
                 # set missed messages for channel back to 0
