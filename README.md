@@ -13,7 +13,7 @@
 - !ignoreme - Ignores all messages and will not butt-ify you
 - !unignoreme - Removes ignore from you
 
-### Recent Updates:
+### January 2025 Updates:
 
 - Remove the chance of auxillary verbs being replaced (in most cases it doesn't work too well)
 - Improve the illegal word list
