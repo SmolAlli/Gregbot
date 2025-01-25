@@ -98,9 +98,6 @@ class Bot(commands.Bot):
             if final_butt_rate < 2:
                 final_butt_rate = 2
 
-            random_int = random.randint(1, final_butt_rate)
-
-
             if settings and random.randint(1, final_butt_rate) == 1:
                 syllable_lists = syllables_split(message.content)
                 butt_num = math.ceil(
