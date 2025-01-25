@@ -1,33 +1,37 @@
-import pyphen
 import re
+import pyphen
+from regex_funcs import LETTERS_REGEX, PUNCTUATION_REGEX, fix_re_escape
 
 s = pyphen.Pyphen(lang='en')
+
+
+REGEX = PUNCTUATION_REGEX + r"|" + LETTERS_REGEX + r"+"
+
 
 def syllables_split(sentence: str):
     words = sentence.split()
     syllable_list = []
-
     for word in words:
         syllables = s.inserted(word).split('-')
-        if word == '\U000e0000':
+        if word == '\U000e0000' or all(len(ele) == 0 for ele in syllables):
             continue
 
         # Separate punctuation to be separate grammatically
         syllables_punctuation = []
         for syllable in syllables:
-            # Gets both words and punctuation
-            regex = r"\w+|[^\w\s]+"
-            # Splits words and punctuation
-            split = re.findall(regex, re.escape(syllable))
+            # Make sure syllable isn't empty
+            if syllables == '':
+                continue
 
+            # Splits words and punctuation
+            split = re.findall(REGEX, re.escape(syllable))
             # Fixes the \\ being messed up from re.escape
-            for i in range(len(split)):
-                split[i] = re.sub(r'\\(.)', r'\1', split[i])
+            for i, e in enumerate(split):
+                split[i] = fix_re_escape(e)
             # Adds the split array to the syllables and punctuation array
             syllables_punctuation = syllables_punctuation + split
-        
-        syllable_list.append(syllables_punctuation)
 
+        syllable_list.append(syllables_punctuation)
     return syllable_list
 
 
