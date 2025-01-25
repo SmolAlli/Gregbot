@@ -100,6 +100,11 @@ class Bot(commands.Bot):
             # print(f'calculated butt rate: {final_butt_rate}')
             # print('-----------------------------------')
 
+            # Ensure final_butt_rate is at least 2 otherwise random.randint will throw an error
+            # Only happens when really unlucky
+            if final_butt_rate < 2:
+                final_butt_rate = 2
+
             random_int = random.randint(1, final_butt_rate)
 
             if settings and random_int == 1:
