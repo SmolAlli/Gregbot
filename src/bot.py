@@ -94,6 +94,13 @@ class Bot(commands.Bot):
             # once the missed message count exceeds the butt rate, the bot will have an increased chance of responding
             final_butt_rate = butt_rate - max(missed_messages - butt_rate, 0)
 
+            # Ensure final_butt_rate is at least 2 otherwise random.randint will throw an error
+            if final_butt_rate < 2:
+                final_butt_rate = 2
+
+            random_int = random.randint(1, final_butt_rate)
+
+
             if settings and random.randint(1, final_butt_rate) == 1:
                 syllable_lists = syllables_split(message.content)
                 butt_num = math.ceil(
