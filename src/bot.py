@@ -95,8 +95,7 @@ class Bot(commands.Bot):
             final_butt_rate = butt_rate - max(missed_messages - butt_rate, 0)
 
             # Ensure final_butt_rate is at least 2 otherwise random.randint will throw an error
-            if final_butt_rate < 2:
-                final_butt_rate = 2
+            final_butt_rate = max(final_butt_rate, 2)
 
             if settings and random.randint(1, final_butt_rate) == 1:
                 syllable_lists = syllables_split(message.content)
@@ -123,7 +122,7 @@ class Bot(commands.Bot):
 
                     # Only log the word replacement once, not as word and syllable separately
                     logger.info(
-                        f"replacing word {syllable_lists[random_word]} with \'{settings["word"]}\' in the message " +
+                        f"replacing word {syllable_lists[random_word]} with \'{settings['word']}\' in the message " +
                         f"\'{message.content}\' written by {message.author.name}")
 
                     # Perform the replacement
@@ -133,7 +132,6 @@ class Bot(commands.Bot):
                     attempts = 0
                     while len(syllable_lists[random_word][random_syllable]) == 1 or \
                             is_punctuation(syllable_lists[random_word][random_syllable]):
-                        print(syllable_lists[random_word][random_syllable])
                         random_syllable = random.randint(
                             0, len(syllable_lists[random_word]) - 1)
                         attempts += 1
@@ -143,7 +141,6 @@ class Bot(commands.Bot):
                             # Missed a message, increment
                             self.missed_messages[channel_name] += 1
                             return
-                    print(syllable_lists[random_word][random_syllable])
 
                     # Check if the given syllable should be plural
                     syllable_lists[random_word][random_syllable] = get_buttword_plural(
@@ -233,7 +230,7 @@ class Bot(commands.Bot):
                     settings["rate"] = new_rate
                     modify_streamer_values(
                         JSON_DATA_PATH, message_user_name, "rate", new_rate)
-                    await ctx.channel.send(f'Rate set to {new_rate}.')
+                    await ctx.channel.send(f'Rate set to 1/{new_rate}.')
                     logger.info(
                         f"Rate set to {new_rate} for channel: {channel_name}")
                 else:
