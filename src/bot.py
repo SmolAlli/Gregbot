@@ -97,6 +97,13 @@ class Bot(commands.Bot):
 
             if settings and random.randint(1, final_butt_rate) == 1:
                 syllable_lists = syllables_split(message.content)
+
+                # Ignore messages with single words that have less than 3 syllables (not including punctuation)
+                if len(syllable_lists) <= 1 and len([x for x in get_syllables_no_punctuation(syllable_lists[0]) if x != '']) < 3:
+                    logger.info(f"Message of {message.content} too short")
+                    self.missed_messages[channel_name] += 1
+                    return
+
                 butt_num = math.ceil(
                     len(syllable_lists) / BUTT_RATE_PER_SENTENCE)
 
@@ -115,7 +122,6 @@ class Bot(commands.Bot):
                                 'Could not find a word to replace, skipping message...')
                             # Missed a message, increment
                             self.missed_messages[channel_name] += 1
-
                             return
 
                     # Only log the word replacement once, not as word and syllable separately
