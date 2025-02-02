@@ -92,10 +92,8 @@ class Bot(commands.Bot):
 
             # calculate the final butt rate for the channel
             # once the missed message count exceeds the butt rate, the bot will have an increased chance of responding
-            final_butt_rate = butt_rate - max(missed_messages - butt_rate, 0)
-
-            # Ensure final_butt_rate is at least 2 otherwise random.randint will throw an error
-            final_butt_rate = max(final_butt_rate, 2)
+            # Ensure final_butt_rate is at least 1 otherwise random.randint will throw an error
+            final_butt_rate = max(butt_rate - max(missed_messages - butt_rate, 0), 1)
 
             if settings and random.randint(1, final_butt_rate) == 1:
                 syllable_lists = syllables_split(message.content)
