@@ -157,8 +157,8 @@ class Bot(commands.Bot):
 
                     # Only log the word replacement once, not as word and syllable separately
                     logger.info(
-                        f"replacing word {syllable_lists[random_word][random_syllable]} with \'{buttword}\' in the message " +
-                        f"\'{message.content}\' written by {message.author.name}")
+                        f"replacing word {syllable_lists[random_word][random_syllable]} with \'{buttword}\' in the " +
+                        f"message \'{message.content}\' written by {message.author.name}")
 
                 await message.channel.send(f'{syllables_to_sentence(syllable_lists)}')
                 # set missed messages for channel back to 0
