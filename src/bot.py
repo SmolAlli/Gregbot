@@ -66,6 +66,50 @@ class Bot(commands.Bot):
             logger.warning(
                 f'Command on cooldown: {context.command.name} from {context.author.name}')
 
+    def find_valid_syllable(self, message, syllable_lists):
+        # Get logger for the current channel
+        logger = get_logger_for_channel(message.channel.name)
+
+        random_word = 0
+        for _ in range(10):  # 10 attempts to find a new word
+            random_word = random.randint(0, len(syllable_lists) - 1)
+            # If an ignored word, find another word
+            if "".join(get_syllables_no_punctuation(
+                    syllable_lists[random_word])).lower() in IGNORE_WORDS:
+                continue
+
+            # Word is fine, continue forward
+            break
+        else:
+            logger.warning(
+                'Could not find a word to replace, skipping message...')
+            # Missed a message, increment
+            self.missed_messages[message.channel.name] += 1
+            return False
+
+        random_syllable = 0
+        for _ in range(5):  # 5 attempts to find a new syllable
+            random_syllable = random.randint(
+                0, len(syllable_lists[random_word]) - 1)
+            # If the syllable is only 1 letter, don't use
+            if len(syllable_lists[random_word][random_syllable]) == 1:
+                continue
+
+            # If the syllable contains punctuation, don't use
+            if is_punctuation(syllable_lists[random_word][random_syllable]):
+                continue
+
+            # Syllable is fine, continue forward
+            break
+        else:
+            logger.warning(
+                'Could not find a syllable to replace, skipping message...')
+            # Missed a message, increment
+            self.missed_messages[message.channel.name] += 1
+            return False
+
+        return [random_word, random_syllable]
+
     async def event_message(self, message):
         channel_name = message.channel.name
 
@@ -84,66 +128,37 @@ class Bot(commands.Bot):
         if message.author.name not in open_file(IGNORED_LIST_PATH, []):
             # grab the channel's settings
             settings = self.channel_settings.get(channel_name)
-            # grab the current missed message count for the channel
-            missed_messages = self.missed_messages[channel_name]
 
             # grab the butt rate for the channel
             butt_rate = settings["rate"]
 
             # calculate the final butt rate for the channel
             # once the missed message count exceeds the butt rate, the bot will have an increased chance of responding
-            final_butt_rate = butt_rate - max(missed_messages - butt_rate, 0)
+            final_butt_rate = butt_rate - max(self.missed_messages[channel_name] - butt_rate, 0)
 
             if settings and random.randint(1, final_butt_rate) == 1:
                 syllable_lists = syllables_split(message.content)
+
                 butt_num = math.ceil(
                     len(syllable_lists) / BUTT_RATE_PER_SENTENCE)
 
                 for _ in range(butt_num):
-                    random_word = random.randint(0, len(syllable_lists) - 1)
-                    attempts = 0
-                    while all([len(syllable_lists[random_word]) <= 1,
-                              "".join(get_syllables_no_punctuation(
-                                  syllable_lists[random_word])).lower() in IGNORE_WORDS,
-                               attempts < 10]):
-                        random_word = random.randint(
-                            0, len(syllable_lists) - 1)
-                        attempts += 1
-                        if attempts >= 9:
-                            logger.warning(
-                                'Could not find a word to replace, skipping message...')
-                            # Missed a message, increment
-                            self.missed_messages[channel_name] += 1
+                    out = self.find_valid_syllable(message, syllable_lists)
 
-                            return
+                    if out is False:
+                        return
+
+                    random_word = out[0]
+                    random_syllable = out[1]
+                    # Check if the given syllable should be plural
+                    buttword = get_buttword_plural(
+                        settings["word"], syllable_lists[random_word], random_syllable)
+                    syllable_lists[random_word][random_syllable] = buttword
 
                     # Only log the word replacement once, not as word and syllable separately
                     logger.info(
-                        f"replacing word {syllable_lists[random_word]} with \'{settings["word"]}\' in the message " +
+                        f"replacing word {syllable_lists[random_word][random_syllable]} with \'{buttword}\' in the message " +
                         f"\'{message.content}\' written by {message.author.name}")
-
-                    # Perform the replacement
-                    random_syllable = random.randint(
-                        0, len(syllable_lists[random_word]) - 1)
-                    # Choose a different syllable if the syllable is only 1 character
-                    attempts = 0
-                    while len(syllable_lists[random_word][random_syllable]) == 1 or \
-                            is_punctuation(syllable_lists[random_word][random_syllable]):
-                        print(syllable_lists[random_word][random_syllable])
-                        random_syllable = random.randint(
-                            0, len(syllable_lists[random_word]) - 1)
-                        attempts += 1
-                        if attempts >= 4:
-                            logger.warning(
-                                'Could not find a syllable to replace, skipping message...')
-                            # Missed a message, increment
-                            self.missed_messages[channel_name] += 1
-                            return
-                    print(syllable_lists[random_word][random_syllable])
-
-                    # Check if the given syllable should be plural
-                    syllable_lists[random_word][random_syllable] = get_buttword_plural(
-                        settings["word"], syllable_lists[random_word], random_syllable)
 
                 await message.channel.send(f'{syllables_to_sentence(syllable_lists)}')
                 # set missed messages for channel back to 0
@@ -154,15 +169,15 @@ class Bot(commands.Bot):
 
         await self.handle_commands(message)
 
-    @ commands.command()
-    @ commands.cooldown(3, 45, commands.Bucket.user)
+    @commands.command()
+    @commands.cooldown(3, 45, commands.Bucket.user)
     async def hello(self, ctx: commands.Context):
         # Get logger for the current channel
         logger = get_logger_for_channel(ctx.channel.name)
         await ctx.channel.send(f'hiii {ctx.author.name}!')
         logger.info(f"Hello command invoked by {ctx.author.name}")
 
-    @ commands.command()
+    @commands.command()
     async def join(self, ctx: commands.Context):
         # Get logger for the current channel
         logger = get_logger_for_channel(ctx.channel.name)
@@ -179,7 +194,7 @@ class Bot(commands.Bot):
         else:
             await ctx.send(f'Already in {channel_name}\'s channel.')
 
-    @ commands.command()
+    @commands.command()
     async def leave(self, ctx: commands.Context):
         # Get logger for the current channel
         logger = get_logger_for_channel(ctx.channel.name)
@@ -202,7 +217,7 @@ class Bot(commands.Bot):
         else:
             await ctx.send(f'The bot is not currently in {channel_name}\'s channel.')
 
-    @ commands.command()
+    @commands.command()
     async def buttrate(self, ctx: commands.Context, new_rate: str = None):
         # Get logger for the current channel
         logger = get_logger_for_channel(ctx.channel.name)
@@ -240,7 +255,7 @@ class Bot(commands.Bot):
                     f'"{new_rate}" is not a valid number. Please enter a valid number between 10 and 1000.')
                 logger.warning(f"Invalid rate input: {new_rate}")
 
-    @ commands.command()
+    @commands.command()
     async def buttword(self, ctx: commands.Context, new_word: str = None):
         # Get logger for the current channel
         logger = get_logger_for_channel(ctx.channel.name)
@@ -263,7 +278,7 @@ class Bot(commands.Bot):
             logger.info(
                 f"Word changed to {settings['word']} for channel: {channel_name}")
 
-    @ commands.command()
+    @commands.command()
     async def ignoreme(self, ctx: commands.Context):
         # Get logger for the current channel
         logger = get_logger_for_channel(ctx.channel.name)
@@ -277,7 +292,7 @@ class Bot(commands.Bot):
         else:
             await ctx.channel.send(f'User {user_to_ignore} has already been ignored.')
 
-    @ commands.command()
+    @commands.command()
     async def unignoreme(self, ctx: commands.Context):
         # Get logger for the current channel
         logger = get_logger_for_channel(ctx.channel.name)
