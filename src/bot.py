@@ -66,6 +66,9 @@ class Bot(commands.Bot):
             logger.warning(
                 f'Command on cooldown: {context.command.name} from {context.author.name}')
 
+    def increase_missed_messages(self, name):
+        self.missed_messages[name] += 1
+
     def find_valid_syllable(self, message, syllable_lists):
         # Get logger for the current channel
         logger = get_logger_for_channel(message.channel.name)
@@ -84,7 +87,7 @@ class Bot(commands.Bot):
             logger.warning(
                 'Could not find a word to replace, skipping message...')
             # Missed a message, increment
-            self.missed_messages[message.channel.name] += 1
+            self.increase_missed_messages(message.channel.name)
             return False
 
         random_syllable = 0
@@ -105,7 +108,7 @@ class Bot(commands.Bot):
             logger.warning(
                 'Could not find a syllable to replace, skipping message...')
             # Missed a message, increment
-            self.missed_messages[message.channel.name] += 1
+            self.increase_missed_messages(message.channel.name)
             return False
 
         return [random_word, random_syllable]
@@ -175,7 +178,7 @@ class Bot(commands.Bot):
                             logger.warning(
                                 'Could not find a syllable to replace, skipping message...')
                             # Missed a message, increment
-                            self.missed_messages[channel_name] += 1
+                            self.increase_missed_messages(channel_name)
                             return
 
                     # Check if the given syllable should be plural
@@ -187,7 +190,7 @@ class Bot(commands.Bot):
                 self.missed_messages[channel_name] = 0
             else:
                 # increment the missed messages for the channel
-                self.missed_messages[channel_name] += 1
+                self.increase_missed_messages(channel_name)
 
         await self.handle_commands(message)
 
