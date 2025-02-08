@@ -75,14 +75,3 @@ def get_buttword_plural(word: str, li: list[str], index: int):
     plural = get_plural_of_word(word) if check_if_should_be_plural(
         get_syllables_no_punctuation(li), index) else word
     return plural
-
-
-x = [['I'], ['have'], ['a'], ['dis', 'cord'], ['server', ','], ['join'], ['to'], ['get'], ['no', 'ti', 'fied'], ['when'], [
-    'I'], ['am'], ['live', '!'], ['ht', 'tps', '://', 'dis', 'cord', '.', 'g', 'g', '/', 'mUX', '9', 'Q', '8', 'u']]
-
-
-# for a in x:
-#     for i, y in enumerate(a):
-#         print(a)
-#         if not is_punctuation(y):
-#             get_buttword_plural("butt", a, i)

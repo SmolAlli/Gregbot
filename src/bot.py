@@ -134,7 +134,8 @@ class Bot(commands.Bot):
 
             # calculate the final butt rate for the channel
             # once the missed message count exceeds the butt rate, the bot will have an increased chance of responding
-            final_butt_rate = butt_rate - max(self.missed_messages[channel_name] - butt_rate, 0)
+            # Ensure final_butt_rate is at least 1 otherwise random.randint will throw an error
+            final_butt_rate = max(butt_rate - max(self.missed_messages[channel_name] - butt_rate, 0), 1)
 
             if settings and random.randint(1, final_butt_rate) == 1:
                 syllable_lists = syllables_split(message.content)
@@ -159,6 +160,27 @@ class Bot(commands.Bot):
                     logger.info(
                         f"replacing word {syllable_lists[random_word][random_syllable]} with \'{buttword}\' in the " +
                         f"message \'{message.content}\' written by {message.author.name}")
+
+                    # Perform the replacement
+                    random_syllable = random.randint(
+                        0, len(syllable_lists[random_word]) - 1)
+                    # Choose a different syllable if the syllable is only 1 character
+                    attempts = 0
+                    while len(syllable_lists[random_word][random_syllable]) == 1 or \
+                            is_punctuation(syllable_lists[random_word][random_syllable]):
+                        random_syllable = random.randint(
+                            0, len(syllable_lists[random_word]) - 1)
+                        attempts += 1
+                        if attempts >= 4:
+                            logger.warning(
+                                'Could not find a syllable to replace, skipping message...')
+                            # Missed a message, increment
+                            self.missed_messages[channel_name] += 1
+                            return
+
+                    # Check if the given syllable should be plural
+                    syllable_lists[random_word][random_syllable] = get_buttword_plural(
+                        settings["word"], syllable_lists[random_word], random_syllable)
 
                 await message.channel.send(f'{syllables_to_sentence(syllable_lists)}')
                 # set missed messages for channel back to 0
@@ -244,7 +266,7 @@ class Bot(commands.Bot):
                     settings["rate"] = new_rate
                     modify_streamer_values(
                         JSON_DATA_PATH, message_user_name, "rate", new_rate)
-                    await ctx.channel.send(f'Rate set to {new_rate}.')
+                    await ctx.channel.send(f'Rate set to 1/{new_rate}.')
                     logger.info(
                         f"Rate set to {new_rate} for channel: {channel_name}")
                 else:
