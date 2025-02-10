@@ -237,7 +237,7 @@ class Bot(commands.Bot):
         else:
             await ctx.send(f'The bot is not currently in {channel_name}\'s channel.')
 
-    @commands.command()
+    @commands.command(name="buttrate", aliases=["rate", "setrate"])
     async def buttrate(self, ctx: commands.Context, new_rate: int = None):
         # Get logger for the current channel
         logger = get_logger_for_channel(ctx.channel.name)
@@ -275,7 +275,7 @@ class Bot(commands.Bot):
                     await ctx.channel.send(
                         f'{new_rate} is not a valid rate. Please choose a number between 10 and 1000.')
 
-    @commands.command()
+    @commands.command(name="buttword", aliases=["setword"])
     async def buttword(self, ctx: commands.Context, new_word: str = None):
         # Get logger for the current channel
         logger = get_logger_for_channel(ctx.channel.name)
