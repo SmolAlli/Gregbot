@@ -119,6 +119,12 @@ class Bot(commands.Bot):
 
         syllable_lists = syllables_split(message.content)
 
+        # Ignore messages with single words that have less than 3 syllables (not including punctuation)
+        filtered_syllables = len([x for x in get_syllables_no_punctuation(syllable_lists[0]) if x != ''])
+        if len(syllable_lists) <= 1 and filtered_syllables < 3:
+            logger.info(f"Message of {message.content} too short")
+            return False
+
         butt_num = math.ceil(
             len(syllable_lists) / BUTT_RATE_PER_SENTENCE)
 
@@ -154,86 +160,11 @@ class Bot(commands.Bot):
         if message.echo:
             return
 
-        # check if missed_messages has the channel name as a key
-        if channel_name not in self.missed_messages:
-            # add the channel name as a key and set the value to 0
-            self.missed_messages[channel_name] = 0
-
-        # Get logger for the current channel
-        logger = get_logger_for_channel(message.channel.name)
-
-        # Check if the user is ignored
-        if message.author.name not in open_file(IGNORED_LIST_PATH, []):
-            # grab the channel's settings
-            settings = self.channel_settings.get(channel_name)
-            # grab the current missed message count for the channel
-            missed_messages = self.missed_messages[channel_name]
-
-            # grab the butt rate for the channel
-            butt_rate = settings["rate"]
-
-            # calculate the final butt rate for the channel
-            # once the missed message count exceeds the butt rate, the bot will have an increased chance of responding
-            # Ensure final_butt_rate is at least 1 otherwise random.randint will throw an error
-            final_butt_rate = max(butt_rate - max(missed_messages - butt_rate, 0), 1)
-
-            if settings and random.randint(1, final_butt_rate) == 1:
-                syllable_lists = syllables_split(message.content)
-
-                # Ignore messages with single words that have less than 3 syllables (not including punctuation)
-                if len(syllable_lists) <= 1 and len([x for x in get_syllables_no_punctuation(syllable_lists[0]) if x != '']) < 3:
-                    logger.info(f"Message of {message.content} too short")
-                    self.missed_messages[channel_name] += 1
-                    return
-
-                butt_num = math.ceil(
-                    len(syllable_lists) / BUTT_RATE_PER_SENTENCE)
-
-                for _ in range(butt_num):
-                    random_word = random.randint(0, len(syllable_lists) - 1)
-                    attempts = 0
-                    while all([len(syllable_lists[random_word]) <= 1,
-                              "".join(get_syllables_no_punctuation(
-                                  syllable_lists[random_word])).lower() in IGNORE_WORDS,
-                               attempts < 10]):
-                        random_word = random.randint(
-                            0, len(syllable_lists) - 1)
-                        attempts += 1
-                        if attempts >= 9:
-                            logger.warning(
-                                'Could not find a word to replace, skipping message...')
-                            # Missed a message, increment
-                            self.missed_messages[channel_name] += 1
-                            return
-
-                    # Only log the word replacement once, not as word and syllable separately
-                    logger.info(
-                        f"replacing word {syllable_lists[random_word]} with \'{settings['word']}\' in the message " +
-                        f"\'{message.content}\' written by {message.author.name}")
-
-                    # Perform the replacement
-                    random_syllable = random.randint(
-                        0, len(syllable_lists[random_word]) - 1)
-                    # Choose a different syllable if the syllable is only 1 character
-                    attempts = 0
-                    while len(syllable_lists[random_word][random_syllable]) == 1 or \
-                            is_punctuation(syllable_lists[random_word][random_syllable]):
-                        random_syllable = random.randint(
-                            0, len(syllable_lists[random_word]) - 1)
-                        attempts += 1
-                        if attempts >= 4:
-                            logger.warning(
-                                'Could not find a syllable to replace, skipping message...')
-                            # Missed a message, increment
-                            self.missed_messages[channel_name] += 1
-                            return
-
-                    # Check if the given syllable should be plural
-                    syllable_lists[random_word][random_syllable] = get_buttword_plural(
-                        settings["word"], syllable_lists[random_word], random_syllable)
-
-                await message.channel.send(f'{syllables_to_sentence(syllable_lists)}')
-                # set missed messages for channel back to 0
+        # Make sure to not butt in the bot's channel
+        if not channel_name == bot_nickname:
+            # check if missed_messages has the channel name as a key
+            if channel_name not in self.missed_messages:
+                # add the channel name as a key and set the value to 0
                 self.missed_messages[channel_name] = 0
 
             # Check if the user is ignored
