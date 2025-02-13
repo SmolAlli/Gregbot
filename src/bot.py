@@ -2,7 +2,7 @@ import math
 import os
 import random
 import json
-from typing import Dict, Optional
+from typing import Dict
 from dotenv import load_dotenv
 from twitchio.ext import commands  # type: ignore
 from json_funcs import modify_streamer_settings, modify_streamer_values, add_ignore_list, remove_ignore_list, open_file
@@ -219,24 +219,24 @@ class Bot(commands.Bot):
         # Get logger for the current channel
         logger = get_logger_for_channel(ctx.channel.name)
         is_in_bot_channel = ctx.channel.name == bot_nickname
-        channel_name = ctx.author.name if is_in_bot_channel else ctx.channel.name
+        message_user_name = ctx.author.name if is_in_bot_channel else ctx.channel.name
 
-        if channel_name != ctx.channel.name:
+        if not is_in_bot_channel and message_user_name != ctx.channel.name:
             await ctx.send('Please use the !leave command in your own channel.')
             logger.warning(
-                f'Non-host trying to remove me from the channel {channel_name}.')
+                f'Non-host trying to remove me from the channel {message_user_name}.')
             return
 
-        if channel_name in self.channel_settings:
+        if message_user_name in self.channel_settings:
             modify_streamer_settings(JSON_DATA_PATH, "rm", {
-                                     channel_name: self.channel_settings[channel_name]})
-            del self.channel_settings[channel_name]
+                                     message_user_name: self.channel_settings[message_user_name]})
+            del self.channel_settings[message_user_name]
 
-            await ctx.send(f'Leaving {channel_name}\'s channel.')
-            await self.part_channels([channel_name])
-            logger.info(f"Leaving channel: {channel_name}")
+            await ctx.send(f'Leaving {message_user_name}\'s channel.')
+            await self.part_channels([message_user_name])
+            logger.info(f"Leaving channel: {message_user_name}")
         else:
-            await ctx.send(f'The bot is not currently in {channel_name}\'s channel.')
+            await ctx.send(f'The bot is not currently in {message_user_name}\'s channel.')
 
     @commands.command(name="buttrate", aliases=["rate", "setrate"])
     async def buttrate(self, ctx: commands.Context, new_rate: int = None):
