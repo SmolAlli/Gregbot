@@ -269,7 +269,10 @@ class Bot(commands.Bot):
                     settings["rate"] = new_rate
                     modify_streamer_values(
                         JSON_DATA_PATH, message_user_name, "rate", new_rate)
-                    await ctx.channel.send(f'Rate set to 1/{new_rate}.')
+                    if is_in_bot_channel:
+                        await ctx.channel.send(f'Rate for the channel {channel_name} changed to {new_rate}.')
+                    else:
+                        await ctx.channel.send(f'Rate changed to 1/{new_rate}.')
                     logger.info(
                         f"Rate set to 1/{new_rate} for channel: {channel_name}")
                 else:
@@ -305,7 +308,10 @@ class Bot(commands.Bot):
                 settings["word"] = new_word
                 modify_streamer_values(
                     JSON_DATA_PATH, channel_name, "word", new_word)
-                await ctx.channel.send(f'Word for the channel {channel_name} changed to {settings["word"]}.')
+                if is_in_bot_channel:
+                    await ctx.channel.send(f'Word for the channel {channel_name} changed to {new_word}.')
+                else:
+                    await ctx.channel.send(f'Word changed to {new_word}.')
                 logger.info(
                     f"Word changed to {settings['word']} for channel: {channel_name}")
 
