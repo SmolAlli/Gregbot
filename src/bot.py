@@ -218,7 +218,8 @@ class Bot(commands.Bot):
     async def leave(self, ctx: commands.Context):
         # Get logger for the current channel
         logger = get_logger_for_channel(ctx.channel.name)
-        channel_name = ctx.author.name
+        is_in_bot_channel = ctx.channel.name == bot_nickname
+        channel_name = ctx.author.name if is_in_bot_channel else ctx.channel.name
 
         if channel_name != ctx.channel.name:
             await ctx.send('Please use the !leave command in your own channel.')
