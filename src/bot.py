@@ -19,7 +19,7 @@ if not os.path.exists("streamer_logs"):
 # Load up the .env files
 load_dotenv()
 bot_access_token = os.environ.get('TMI_TOKEN')
-bot_nickname = os.environ.get('BOT_NICKNAME')
+bot_nickname = os.environ.get('BOT_NICKNAME').lower()
 bot_prefix = os.environ.get('BOT_PREFIX')
 
 # JSON containing settings for each streamer
@@ -238,7 +238,7 @@ class Bot(commands.Bot):
             await ctx.send(f'The bot is not currently in {channel_name}\'s channel.')
 
     @commands.command(name="buttrate", aliases=["rate", "setrate"])
-    async def buttrate(self, ctx: commands.Context, new_rate: Optional[int] = None):
+    async def buttrate(self, ctx: commands.Context, new_rate: int = None):
         # Get logger for the current channel
         logger = get_logger_for_channel(ctx.channel.name)
         message_user_name = ctx.author.name
