@@ -2,7 +2,7 @@ import math
 import os
 import random
 import json
-from typing import Dict
+from typing import Dict, Optional
 from dotenv import load_dotenv
 from twitchio.ext import commands  # type: ignore
 from json_funcs import modify_streamer_settings, modify_streamer_values, add_ignore_list, remove_ignore_list, open_file
@@ -238,7 +238,7 @@ class Bot(commands.Bot):
             await ctx.send(f'The bot is not currently in {channel_name}\'s channel.')
 
     @commands.command(name="buttrate", aliases=["rate", "setrate"])
-    async def buttrate(self, ctx: commands.Context, new_rate: int = None):
+    async def buttrate(self, ctx: commands.Context, new_rate: Optional[int] = None):
         # Get logger for the current channel
         logger = get_logger_for_channel(ctx.channel.name)
         message_user_name = ctx.author.name
