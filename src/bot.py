@@ -31,7 +31,7 @@ BUTT_RATE_PER_SENTENCE = 10
 UPPER_LIMIT_BUTTRATE = 1000
 LOWER_LIMIT_BUTTRATE = 10
 MAX_WORD_ATTEMPTS = 10
-DEFAULT_BUTT_INFO = {"rate": 30, "word": "butt"}
+DEFAULT_BUTT_INFO = {"rate": 30, "word": "butt", "random_words_enabled": False, "random_words_list": []}
 
 
 class Bot(commands.Bot):
