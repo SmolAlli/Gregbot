@@ -1,15 +1,13 @@
 ## Personal Buttsbot to replace the depreciated version.
 
-### Twitch chatbot that copy's a random user's message, randomly replaces syllables with the word "BUTT" (by default), and spits the message back out.
+### Twitch chatbot that grabs a random user's message, randomly replaces syllables with the word "butt" (by default), and spits the message back out.
 
 ### Commands:
 
 - !join - Summons the bot to the user's channel (typed in the bot's chat)
 - !leave - Dismiss ButtsBorg (typed in the broadcaster's chat)
-- !buttword - Displays the current word being used ('BUTT' is DEFAULT)
-- !buttword (word) - replaces the current word with the newly typed one
-- !rate - Displays the rate at how many messages will pass before you can expect a response (30 is DEFAULT)
-- !rate (number from 10-1000)
+- !buttword [word] - Replaces the current word with the given parameter. If no parameter given, will display the current word. Default is 'butt'.
+- !buttrate [rate] - Replaces the current rate with the given parameter. Must be an integer from 10 to 1000. If no parameter given, will display the current rate. Default is 30 (representing 1/30 chance)
 - !ignoreme - Ignores all messages and will not butt-ify you
 - !unignoreme - Removes ignore from you
 
@@ -41,5 +39,5 @@
 
 - Use python >=3.9
 - Install dependencies with `pip install -r requirements.txt`
-- Setup your .env file with your channel's token/names (refer to the .env sample file)
+- Setup your .env file with your channel's token/names (refer to the .env sample file) - access token info here -> https://twitchio.dev/en/stable/quickstart.html#tokens-and-scopes
 - Run with `py bot.py`
