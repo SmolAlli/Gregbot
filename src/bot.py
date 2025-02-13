@@ -174,7 +174,7 @@ class Bot(commands.Bot):
                 # the bot will have an increased chance of responding
                 # ensure final_butt_rate is at least 1 otherwise random.randint will throw an error
                 final_butt_rate = max(butt_rate - max(self.missed_messages[channel_name] - butt_rate, 0), 1)
-                final_butt_rate = 1
+
                 if settings and random.randint(1, final_butt_rate) == 1:
                     butt_sentence = self.find_buttwords(message)
 
