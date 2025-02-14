@@ -225,24 +225,24 @@ class Bot(commands.Bot):
         # Get logger for the current channel
         logger = get_logger_for_channel(ctx.channel.name)
         is_in_bot_channel = ctx.channel.name == bot_nickname
-        message_user_name = ctx.author.name if is_in_bot_channel else ctx.channel.name
+        channel_name = ctx.author.name if is_in_bot_channel else ctx.channel.name
 
-        if not is_in_bot_channel and message_user_name != ctx.channel.name:
+        if not is_in_bot_channel and channel_name != ctx.author.name:
             await ctx.send('Please use the !leave command in your own channel.')
             logger.warning(
-                f'Non-host trying to remove me from the channel {message_user_name}.')
+                f'Non-host trying to remove me from the channel {channel_name}.')
             return
 
-        if message_user_name in self.channel_settings:
+        if channel_name in self.channel_settings:
             modify_streamer_settings(JSON_DATA_PATH, "rm", {
-                                     message_user_name: self.channel_settings[message_user_name]})
-            del self.channel_settings[message_user_name]
+                                     channel_name: self.channel_settings[channel_name]})
+            del self.channel_settings[channel_name]
 
-            await ctx.send(f'Leaving {message_user_name}\'s channel.')
-            await self.part_channels([message_user_name])
-            logger.info(f"Leaving channel: {message_user_name}")
+            await ctx.send(f'Leaving {channel_name}\'s channel.')
+            await self.part_channels([channel_name])
+            logger.info(f"Leaving channel: {channel_name}")
         else:
-            await ctx.send(f'The bot is not currently in {message_user_name}\'s channel.')
+            await ctx.send(f'The bot is not currently in {channel_name}\'s channel.')
 
     @commands.command(name="buttrate", aliases=["rate", "setrate"])
     async def buttrate(self, ctx: commands.Context, new_rate: int = None):
