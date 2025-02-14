@@ -28,3 +28,6 @@ __pycache__
 
 # Ignore logs
 streamer_logs
+
+# Ignore testing file
+testing.py
