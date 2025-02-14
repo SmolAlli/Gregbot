@@ -231,7 +231,7 @@ class Bot(commands.Bot):
         message_user_name = ctx.author.name if is_in_bot_channel else ctx.channel.name
 
         if not is_in_bot_channel and message_user_name != ctx.channel.name:
-            await ctx.send('Please use the !leave command in your own channel.')
+            await ctx.send(f'Please use the {bot_prefix}leave command in your own channel.')
             logger.warning(
                 f'Non-host trying to remove me from the channel {message_user_name}.')
             return
@@ -261,7 +261,7 @@ class Bot(commands.Bot):
         # let the user know of that instead
         if is_in_bot_channel and channel_name not in self.channel_settings:
             await ctx.channel.send(
-                'The bot has not joined your channel, do !join to have it join.')
+                'The bot has not joined your channel, do {bot_prefix}join to have it join.')
         else:
             settings = self.channel_settings.setdefault(
                 channel_name, DEFAULT_BUTT_INFO)
@@ -301,7 +301,7 @@ class Bot(commands.Bot):
         # let the user know of that instead
         if is_in_bot_channel and channel_name not in self.channel_settings:
             await ctx.channel.send(
-                'The bot has not joined your channel, do !join to have it join.')
+                'The bot has not joined your channel, do {bot_prefix}join to have it join.')
         else:
             settings = self.channel_settings.setdefault(
                 channel_name, DEFAULT_BUTT_INFO)
