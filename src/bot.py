@@ -155,6 +155,7 @@ class Bot(commands.Bot):
         if message.echo:
             return
 
+        print(message.content)
         # Make sure to not butt in the bot's channel
         if not channel_name == bot_nickname:
             # check if missed_messages has the channel name as a key
@@ -223,7 +224,7 @@ class Bot(commands.Bot):
         # Get logger for the current channel
         logger = get_logger_for_channel(channel_name)
 
-        if not is_in_bot_channel and channel_name != ctx.channel.name:
+        if not is_in_bot_channel and channel_name != ctx.author.name:
             await ctx.send('Please use the !leave command in your own channel.')
             logger.warning(
                 f'Non-host trying to remove me from the channel {channel_name}.')
@@ -239,6 +240,43 @@ class Bot(commands.Bot):
             logger.info(f"Leaving channel: {channel_name}")
         else:
             await ctx.send(f'The bot is not currently in {channel_name}\'s channel.')
+
+    @commands.command(name="addword")
+    async def addword(self, ctx: commands.Context, word: str):
+        # Do command for the user's channel instead of channel done in if it's the bot's channel
+        is_in_bot_channel, channel_name = in_bot_channel(bot_nickname, ctx.author.name, ctx.channel.name)
+        print("word", word)
+
+        if is_in_bot_channel and channel_name not in self.channel_settings:
+            await ctx.channel.send(
+                'The bot has not joined your channel, do !join to have it join.')
+        else:
+            if word is None or word.strip() == "" or word == "\U000e0000":
+                await ctx.channel.send('Make sure to include a word: !addword <word>')
+            else:
+                # Get logger for the current channel
+                logger = get_logger_for_channel(channel_name)
+                # check if the user has permission to change the word
+                if channel_name != ctx.author.name:
+                    await ctx.channel.send('You can only add words for your own channel.')
+                    logger.warning(
+                        f"{ctx.author.name} tried to add the word \'{word}\' to {channel_name}'s random word list.")
+                    return
+
+                settings = self.channel_settings.setdefault(
+                    channel_name, DEFAULT_BUTT_INFO)
+
+                # check if word isn't in the current list
+                if word not in settings["random_words"]:
+                    # add it to the local list
+                    settings["random_words"].append(word)
+                    # make a copy to replace the list in streamer_settings.json
+                    rand_words = settings["random_words"]
+                    # modify the streamer_settings.json random_words list
+                    modify_streamer_values(JSON_DATA_PATH, channel_name, "random_words", rand_words)
+                    await ctx.channel.send(f'Added word, \'{word}\'.')
+                else:
+                    await ctx.channel.send(f'\'{word}\' is already in the list.')
 
     @commands.command(name="randomwords")
     async def randomwords(self, ctx: commands.Context):

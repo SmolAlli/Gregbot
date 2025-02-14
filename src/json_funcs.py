@@ -44,7 +44,7 @@ def modify_streamer_settings(path: str, mode: StreamerMode, new_entry: dict[str,
     save_to_file(path, settings)
 
 
-def modify_streamer_values(path: str, channel_name: str, field: str, new_value: int | str):
+def modify_streamer_values(path: str, channel_name: str, field: str, new_value: int | str | list):
     # Open the settings file and get contents
     settings = open_file(path, {})
 
