@@ -134,7 +134,16 @@ class Bot(commands.Bot):
                 buttword = get_buttword_plural(
                     settings["word"], syllable_lists[random_word], random_syllable)
 
-                syllable_lists[random_word][random_syllable] = buttword
+                # Check the capitalisation
+                syll = syllable_lists[random_word][random_syllable]
+                if syll == syll.lower():
+                    syll = buttword
+                elif syll == syll[0].upper() + syll[1:].lower():
+                    syll = buttword[0].upper() + buttword[1:]
+                else:
+                    syll = buttword.upper()
+
+                syllable_lists[random_word][random_syllable] = syll
 
                 # Only log the word replacement once, not as word and syllable separately
                 logger.info(
