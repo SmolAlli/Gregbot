@@ -238,7 +238,7 @@ class Bot(commands.Bot):
         logger = get_logger_for_channel(channel_name)
 
         if not is_in_bot_channel and channel_name != ctx.author.name:
-            await ctx.send('Please use the !leave command in your own channel.')
+            await ctx.send(f'Please use the {bot_prefix}leave command in your own channel.')
             logger.warning(
                 f'Non-host trying to remove me from the channel {channel_name}.')
             return
@@ -261,8 +261,7 @@ class Bot(commands.Bot):
 
         # check where the command is being sent and if the bot has already joined the sender's stream
         if is_in_bot_channel and channel_name not in self.channel_settings:
-            await ctx.channel.send(
-                'The bot has not joined your channel, do !join to have it join.')
+            await ctx.channel.send(f'The bot has not joined your channel, do {bot_prefix}join to have it join.')
             return
         else:
             # # check if the user has permission to use the command in the streamer's channel
@@ -289,11 +288,10 @@ class Bot(commands.Bot):
 
         # check where the command is being sent and if the bot has already joined the sender's stream
         if is_in_bot_channel and channel_name not in self.channel_settings:
-            await ctx.channel.send(
-                'The bot has not joined your channel, do !join to have it join.')
+            await ctx.channel.send(f'The bot has not joined your channel, do {bot_prefix}join to have it join.')
         else:
             if word is None or word.strip() == "" or word == "\U000e0000":
-                await ctx.channel.send('Make sure to include a word: !addword <word>')
+                await ctx.channel.send(f'Make sure to include a word: {bot_prefix}addword <word>')
             else:
 
                 # check if the user has permission to change the word
@@ -334,8 +332,7 @@ class Bot(commands.Bot):
 
         # check where the command is being sent and if the bot has already joined the sender's stream
         if is_in_bot_channel and channel_name not in self.channel_settings:
-            await ctx.channel.send(
-                'The bot has not joined your channel, do !join to have it join.')
+            await ctx.channel.send(f'The bot has not joined your channel, do {bot_prefix}join to have it join.')
         else:
 
             if word is None or word.strip() == "" or word == "\U000e0000":
@@ -416,8 +413,7 @@ class Bot(commands.Bot):
         # If the user is in the bot's channel and checking for their own but has not joined the channel,
         # let the user know of that instead
         if is_in_bot_channel and channel_name not in self.channel_settings:
-            await ctx.channel.send(
-                'The bot has not joined your channel, do !join to have it join.')
+            await ctx.channel.send(f'The bot has not joined your channel, do {bot_prefix}join to have it join.')
         else:
             # Get logger for the current channel
             logger = get_logger_for_channel(channel_name)
@@ -450,8 +446,7 @@ class Bot(commands.Bot):
         # If the user is in the bot's channel and checking for their own but has not joined the channel,
         # let the user know of that instead
         if is_in_bot_channel and channel_name not in self.channel_settings:
-            await ctx.channel.send(
-                'The bot has not joined your channel, do !join to have it join.')
+            await ctx.channel.send(f'The bot has not joined your channel, do {bot_prefix}join to have it join.')
         else:
             # Get logger for the current channel
             logger = get_logger_for_channel(channel_name)
