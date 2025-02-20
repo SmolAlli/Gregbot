@@ -301,10 +301,9 @@ class Bot(commands.Bot):
 
     @commands.command(name="removeword", aliases=["deleteword"])
     async def removeWord(self, ctx: commands.Context, word: str):
+        is_in_bot_channel, channel_name = in_bot_channel(bot_nickname, ctx.author.name, ctx.channel.name)
         # Get logger for the current channel
         logger = get_logger_for_channel(channel_name)
-
-        is_in_bot_channel, channel_name = in_bot_channel(bot_nickname, ctx.author.name, ctx.channel.name)
 
         # check where the command is being sent and if the bot has already joined the sender's stream
         if is_in_bot_channel and channel_name not in self.channel_settings:
@@ -374,7 +373,6 @@ class Bot(commands.Bot):
 
                     # add it to the local list
                     settings["random_words_list"].append(word)
-                    new_settings = settings["random_words_list"]
 
                     # modify the streamer_settings.json random_words list
                     modify_streamer_values(JSON_DATA_PATH, channel_name, "random_words_list",
