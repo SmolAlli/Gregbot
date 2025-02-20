@@ -2,7 +2,7 @@
 
 ### Twitch chatbot that grabs a random user's message, randomly replaces syllables with the word "butt" (by default), and spits the message back out.
 
-### Commands:
+### Common Commands:
 
 - !join - Summons the bot to the user's channel (typed in the bot's chat)
 - !leave - Dismiss ButtsBorg (typed in the broadcaster's chat)
@@ -10,6 +10,19 @@
 - !buttrate [rate] - Replaces the current rate with the given parameter. Must be an integer from 10 to 1000. If no parameter given, will display the current rate. Default is 30 (representing 1/30 chance)
 - !ignoreme - Ignores all messages and will not butt-ify you
 - !unignoreme - Removes ignore from you
+
+### Random Word List Commands:
+
+- !togglerandomwords - enable/disable your random word list
+- !randomwords - display your current word list
+- !addword (word) - add a word to the list
+- !removeword (word) - delete a word from your current list
+
+### February 2025 Updates:
+
+- Streamers can now create a list of replacement words that will randomly be chosen from. The list will only be active if the streamer enables their `!togglerandomwords` setting (See commands above ^).
+- Buttwords will now follow capitalization of the original word/syllable replaced.
+- Buttwords can no longer replace single syllable/word messages.
 
 ### January 2025 Updates:
 
@@ -27,12 +40,9 @@
 
 - Add a !pause command so the user can keep their settings but pause the bot from responding
 - Better word/syllable selection for multiple BUTTs in a sentence (i.e. make sure they aren't side by side). Might need to look into other ways/packages
-- Maybe have cases for specific words that get replaced
-- Allow the streamer to set specific words
-- Allow chatters to favorite a previous generated sentence
+- Allow specific words/syllables to get replaced before others and allow streamers to set those
+- Allow chatters to favorite a previously generated sentence
 - Command to show a chatter how many times the bot has gotten them
-- single word messages get ignored if under 3 syllables ignoring punctuation
-- capitalisation match what is replaced
 - ignore other bots(?)
 
 ## Running
