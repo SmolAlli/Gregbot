@@ -8,9 +8,10 @@ from twitchio.ext import commands  # type: ignore
 from json_funcs import modify_streamer_settings, modify_streamer_values, add_ignore_list, remove_ignore_list, open_file
 from ignore_these_words import IGNORE_WORDS
 from logging_funcs import get_logger_for_channel
+from other_bot_funcs import in_bot_channel
 from plural_funcs import get_buttword_plural,  get_syllables_no_punctuation
 from regex_funcs import is_punctuation
-from syllafunc import syllables_split, syllables_to_sentence
+from syllable_funcs import syllables_split, syllables_to_sentence
 
 # Create a folder for logs if it doesn't exist
 if not os.path.exists("streamer_logs"):
@@ -27,11 +28,16 @@ JSON_DATA_PATH = "streamer_settings.json"
 # JSON containing list of ignored users
 IGNORED_LIST_PATH = "ignored.json"
 
-BUTT_RATE_PER_SENTENCE = 10
+# butts per __ words in a message
+BUTT_REPLACEMENT_PER_SENTENCE = 10
+# highest possible buttrate
 UPPER_LIMIT_BUTTRATE = 1000
+# lowest possible buttrate
 LOWER_LIMIT_BUTTRATE = 10
+# attempts to find a replacement in a message before fail
 MAX_WORD_ATTEMPTS = 10
-DEFAULT_BUTT_INFO = {"rate": 30, "word": "butt"}
+# default streamer settings
+DEFAULT_BUTT_INFO = {"rate": 30, "word": "butt", "random_words_enabled": False, "random_words_list": []}
 
 
 class Bot(commands.Bot):
@@ -125,8 +131,9 @@ class Bot(commands.Bot):
             logger.info(f"Message of {message.content} too short")
             return False
 
+        # calc the number of replacements in the sentence
         butt_num = math.ceil(
-            len(syllable_lists) / BUTT_RATE_PER_SENTENCE)
+            len(syllable_lists) / BUTT_REPLACEMENT_PER_SENTENCE)
 
         valid_butts = 0
         for _ in range(butt_num):
@@ -136,9 +143,17 @@ class Bot(commands.Bot):
                 random_word = out[0]
                 random_syllable = out[1]
 
+                # grab length of the random_words list
+                rand_words_len = len(settings["random_words_list"])
+
+                # decide which streamer word to use:
+                # if random_words are enabled, choose from there, otherwise take the single set word
+                streamer_word_final = settings["word"] if not settings["random_words_enabled"] or len(settings["random_words_list"]) == 0 else settings["random_words_list"][random.randint(
+                    0, rand_words_len)]
+
                 # Check if the given syllable should be plural
                 buttword = get_buttword_plural(
-                    settings["word"], syllable_lists[random_word], random_syllable)
+                    streamer_word_final, syllable_lists[random_word], random_syllable)
 
                 # Check the capitalisation
                 syll = syllable_lists[random_word][random_syllable]
@@ -153,8 +168,8 @@ class Bot(commands.Bot):
 
                 # Only log the word replacement once, not as word and syllable separately
                 logger.info(
-                    f"replacing word {syllable_lists[random_word][random_syllable]} with \'{buttword}\' " +
-                    f"in the message \'{message.content}\' written by {message.author.name}")
+                    f"replaced syllable \'{syll}\' in word \'{syllable_lists[random_word]}\' with \'{buttword}\' " +
+                    f"in the message \'{message.content}\' sent by {message.author.name}")
 
                 valid_butts += 1
 
@@ -216,7 +231,7 @@ class Bot(commands.Bot):
     async def join(self, ctx: commands.Context):
         # Get logger for the current channel
         logger = get_logger_for_channel(ctx.channel.name)
-        channel_name = ctx.author.name
+        channel_name = ctx.author.name.lower()
 
         if channel_name not in self.channel_settings:
             self.channel_settings[channel_name] = DEFAULT_BUTT_INFO
@@ -231,13 +246,19 @@ class Bot(commands.Bot):
 
     @commands.command()
     async def leave(self, ctx: commands.Context):
+        # Do command for the user's channel instead of channel done in if it's the bot's channel
+        is_in_bot_channel, channel_name = in_bot_channel(bot_nickname, ctx.author.name, ctx.channel.name)
+
         # Get logger for the current channel
+        logger = get_logger_for_channel(channel_name)
         logger = get_logger_for_channel(ctx.channel.name)
         is_in_bot_channel = ctx.channel.name == bot_nickname
         channel_name = ctx.author.name if is_in_bot_channel else ctx.channel.name
 
         if not is_in_bot_channel and channel_name != ctx.author.name:
-            await ctx.send('Please use the {bot_prefix}leave command in your own channel.')
+            await ctx.send(f'Please use the {bot_prefix}leave command in your own channel.')
+        if not is_in_bot_channel and channel_name != ctx.author.name:
+            await ctx.send(f'Please use the {bot_prefix}leave command in your own channel.')
             logger.warning(
                 f'Non-host trying to remove me from the channel {channel_name}.')
             return
@@ -253,68 +274,209 @@ class Bot(commands.Bot):
         else:
             await ctx.send(f'The bot is not currently in {channel_name}\'s channel.')
 
-    @commands.command(name="buttrate", aliases=["rate", "setrate"])
-    async def buttrate(self, ctx: commands.Context, new_rate: int = None):
-        # Get logger for the current channel
-        logger = get_logger_for_channel(ctx.channel.name)
-        message_user_name = ctx.author.name
+    @commands.command(name="randomwords")
+    async def showRandomWordList(self, ctx: commands.Context):
 
+        is_in_bot_channel, channel_name = in_bot_channel(bot_nickname, ctx.author.name, ctx.channel.name)
+
+        # check where the command is being sent and if the bot has already joined the sender's stream
+        if is_in_bot_channel and channel_name not in self.channel_settings:
+            await ctx.channel.send(f'The bot has not joined your channel, do {bot_prefix}join to have it join.')
+            return
+        else:
+            # # check if the user has permission to use the command in the streamer's channel
+            # if channel_name != ctx.author.name:
+            #     logger.warning(
+            #         f"{ctx.author.name} tried to check {channel_name}'s random word list.")
+            #     return
+
+            # grab the streamer's settings
+            settings = self.channel_settings.setdefault(
+                channel_name, DEFAULT_BUTT_INFO)
+
+            if len(settings["random_words_list"]) == 0:
+                await ctx.channel.send(f'Word list is empty.')
+            else:
+                await ctx.channel.send(f'Random Word List: {settings["random_words_list"]}')
+
+    @commands.command(name="removeword", aliases=["deleteword"])
+    async def removeWord(self, ctx: commands.Context, word: str):
+        # Get logger for the current channel
+        logger = get_logger_for_channel(channel_name)
+
+        is_in_bot_channel, channel_name = in_bot_channel(bot_nickname, ctx.author.name, ctx.channel.name)
+
+        # check where the command is being sent and if the bot has already joined the sender's stream
+        if is_in_bot_channel and channel_name not in self.channel_settings:
+            await ctx.channel.send(f'The bot has not joined your channel, do {bot_prefix}join to have it join.')
+        else:
+            if word is None or word.strip() == "" or word == "\U000e0000":
+                await ctx.channel.send(f'Make sure to include a word: {bot_prefix}addword <word>')
+            else:
+
+                # check if the user has permission to change the word
+                if channel_name != ctx.author.name:
+                    await ctx.channel.send('You can only add words for your own channel.')
+                    logger.warning(
+                        f"{ctx.author.name} tried to add the word \'{word}\' to {channel_name}'s random word list.")
+                    return
+
+                # grab the streamer's settings
+                settings = self.channel_settings.setdefault(
+                    channel_name, DEFAULT_BUTT_INFO)
+
+                # check if word isn't in the current list
+                if word not in settings["random_words_list"]:
+                    await ctx.channel.send(f'\'{word}\' is not in the word list.')
+                    logger.info(
+                        f'{channel_name} tried to remove \'{word}\' from their word list and was not found. Current word list: {settings["random_words_list"]}')
+                else:
+
+                    # remove the word from settings
+                    settings["random_words_list"].remove(word)
+                    # modify the streamer_settings.json random_words list
+                    modify_streamer_values(JSON_DATA_PATH, channel_name, "random_words_list",
+                                           settings["random_words_list"])
+                    await ctx.channel.send(f'Removed word, \'{word}\'.')
+
+                    logger.info(
+                        f'{channel_name} removed the word \'{word}\' from their word list successfully. Current word list: {settings["random_words_list"]}')
+
+    @commands.command(name="addword")
+    async def addWord(self, ctx: commands.Context, word: str):
         # Do command for the user's channel instead of channel done in if it's the bot's channel
-        is_in_bot_channel = ctx.channel.name == bot_nickname
-        channel_name = message_user_name if is_in_bot_channel else ctx.channel.name
+        is_in_bot_channel, channel_name = in_bot_channel(bot_nickname, ctx.author.name, ctx.channel.name)
+
+        # Get logger for the current channel
+        logger = get_logger_for_channel(channel_name)
+
+        # check where the command is being sent and if the bot has already joined the sender's stream
+        if is_in_bot_channel and channel_name not in self.channel_settings:
+            await ctx.channel.send(f'The bot has not joined your channel, do {bot_prefix}join to have it join.')
+        else:
+
+            if word is None or word.strip() == "" or word == "\U000e0000":
+                await ctx.channel.send(f'Make sure to include a word: {bot_prefix}addword <word>')
+            else:
+
+                # check if the user has permission to change the word
+                if channel_name != ctx.author.name:
+                    await ctx.channel.send('You can only add words for your own channel.')
+                    logger.warning(
+                        f"{ctx.author.name} tried to add the word \'{word}\' to {channel_name}'s random word list.")
+                    return
+
+                settings = self.channel_settings.setdefault(
+                    channel_name, DEFAULT_BUTT_INFO)
+
+                # check if word isn't in the current list
+                if word not in settings["random_words_list"]:
+
+                    # add it to the local list
+                    settings["random_words_list"].append(word)
+                    new_settings = settings["random_words_list"]
+
+                    # modify the streamer_settings.json random_words list
+                    modify_streamer_values(JSON_DATA_PATH, channel_name, "random_words_list",
+                                           settings["random_words_list"])
+                    await ctx.channel.send(f'Added word, \'{word}\'.')
+                    logger.info(
+                        f'{ctx.message.author} added the word \'{word}\' to their random word list. Current word list: {settings["random_words_list"]}')
+
+                else:
+                    await ctx.channel.send(f'\'{word}\' is already in the list.')
+                    logger.info(
+                        f'{ctx.message.author} tried to add the word \'{word}\' to their random word list. Current word list: {settings["random_words_list"]}')
+
+    @commands.command(name="togglerandomwords", aliases=["togglewords", "togglerandom"])
+    async def toggleRandomWords(self, ctx: commands.Context):
+        # Do command for the user's channel instead of channel done in if it's the bot's channel
+        is_in_bot_channel, channel_name = in_bot_channel(bot_nickname, ctx.author.name, ctx.channel.name)
 
         # If the user is in the bot's channel and checking for their own but has not joined the channel,
         # let the user know of that instead
         if is_in_bot_channel and channel_name not in self.channel_settings:
             await ctx.channel.send(
-                'The bot has not joined your channel, do {bot_prefix}join to have it join.')
+                f'The bot has not joined your channel, do {bot_prefix}join to have it join.')
         else:
+            # Get logger for the current channel
+            logger = get_logger_for_channel(channel_name)
+            # check if the user has permission to change the word
+            if channel_name != ctx.author.name:
+                await ctx.channel.send('You can only enable/disable random words for your own channel.')
+                logger.warning(
+                    f"{ctx.author.name} tried to enable/disable random words for {channel_name}")
+                return
+
+            settings = self.channel_settings.setdefault(
+                channel_name, DEFAULT_BUTT_INFO)
+
+            # enable if disabled
+            if not settings["random_words_enabled"]:
+                settings["random_words_enabled"] = True
+                modify_streamer_values(JSON_DATA_PATH, channel_name, "random_words_enabled", True)
+                await ctx.channel.send(f'You have enabled random words{" for @" + channel_name if is_in_bot_channel else ""}. Add words using {bot_prefix}addword <word> OR remove words using {bot_prefix}removeword <word>.')
+            # disable if enabled
+            else:
+                settings["random_words_enabled"] = False
+                modify_streamer_values(JSON_DATA_PATH, channel_name, "random_words_enabled", False)
+                await ctx.channel.send(f'You have disabled random words{" for " + channel_name if is_in_bot_channel else ""}.')
+
+            logger.info(
+                f'Random words are now {"enabled" if settings["random_words_enabled"] else 'disabled'} for {channel_name}.')
+
+    @commands.command(name="buttrate", aliases=["rate", "setrate"])
+    async def buttrate(self, ctx: commands.Context, new_rate: int = None):
+        # Do command for the user's channel instead of channel done in if it's the bot's channel
+        is_in_bot_channel, channel_name = in_bot_channel(bot_nickname, ctx.author.name, ctx.channel.name)
+
+        # If the user is in the bot's channel and checking for their own but has not joined the channel,
+        # let the user know of that instead
+        if is_in_bot_channel and channel_name not in self.channel_settings:
+            await ctx.channel.send(f'The bot has not joined your channel, do {bot_prefix}join to have it join.')
+        else:
+            # Get logger for the current channel
+            logger = get_logger_for_channel(channel_name)
+
             settings = self.channel_settings.setdefault(
                 channel_name, DEFAULT_BUTT_INFO)
 
             if new_rate is None:
-                await ctx.channel.send(f'The current rate for the channel {channel_name} is 1/{settings["rate"]}.')
+                await ctx.channel.send(f'The current rate for {channel_name}\'s channel is 1/{settings["rate"]}.')
                 logger.info(f"Checked rate: {settings['rate']}")
             else:
-                if message_user_name != channel_name:
+                if ctx.author.name != channel_name:
                     logger.warning(
-                        f'{message_user_name} tried to change the rate of {channel_name}')
+                        f'{ctx.author.name} tried to change the rate of {channel_name}')
                     return
                 if LOWER_LIMIT_BUTTRATE <= new_rate <= UPPER_LIMIT_BUTTRATE:
                     settings["rate"] = new_rate
                     modify_streamer_values(
-                        JSON_DATA_PATH, message_user_name, "rate", new_rate)
-                    if is_in_bot_channel:
-                        await ctx.channel.send(f'Rate for the channel {channel_name} changed to {new_rate}.')
-                    else:
-                        await ctx.channel.send(f'Rate changed to 1/{new_rate}.')
-                    logger.info(
-                        f"Rate set to 1/{new_rate} for channel: {channel_name}")
+                        JSON_DATA_PATH, ctx.author.name, "rate", new_rate)
+                    await ctx.channel.send(f'Rate{" for the channel" + channel_name if is_in_bot_channel else ""} changed to {new_rate}.')
                 else:
                     await ctx.channel.send(
                         f'{new_rate} is not a valid rate. Please choose a number between 10 and 1000.')
 
     @commands.command(name="buttword", aliases=["setword"])
     async def buttword(self, ctx: commands.Context, new_word: str = None):
-        # Get logger for the current channel
-        logger = get_logger_for_channel(ctx.channel.name)
-
         # Do command for the user's channel instead of channel done in if it's the bot's channel
-        is_in_bot_channel = ctx.channel.name == bot_nickname
-        channel_name = ctx.author.name if is_in_bot_channel else ctx.channel.name
+        is_in_bot_channel, channel_name = in_bot_channel(bot_nickname, ctx.author.name, ctx.channel.name)
 
         # If the user is in the bot's channel and checking for their own but has not joined the channel,
         # let the user know of that instead
         if is_in_bot_channel and channel_name not in self.channel_settings:
-            await ctx.channel.send(
-                'The bot has not joined your channel, do {bot_prefix}join to have it join.')
+            await ctx.channel.send(f'The bot has not joined your channel, do {bot_prefix}join to have it join.')
         else:
+            # Get logger for the current channel
+            logger = get_logger_for_channel(channel_name)
             settings = self.channel_settings.setdefault(
                 channel_name, DEFAULT_BUTT_INFO)
-
+            # if an argument isn't specified
             if new_word is None:
                 await ctx.channel.send(f'The current word for the channel {channel_name} is {settings["word"]}.')
             else:
+                # check if the user has permission to change the word
                 if channel_name != ctx.author.name:
                     await ctx.channel.send('You can only change the word for your own channel.')
                     logger.warning(
@@ -323,10 +485,8 @@ class Bot(commands.Bot):
                 settings["word"] = new_word
                 modify_streamer_values(
                     JSON_DATA_PATH, channel_name, "word", new_word)
-                if is_in_bot_channel:
-                    await ctx.channel.send(f'Word for the channel {channel_name} changed to {new_word}.')
-                else:
-                    await ctx.channel.send(f'Word changed to {new_word}.')
+                await ctx.channel.send(f'Word {" for the channel" + channel_name if is_in_bot_channel else ""} changed to {new_word}.')
+
                 logger.info(
                     f"Word changed to {settings['word']} for channel: {channel_name}")
 

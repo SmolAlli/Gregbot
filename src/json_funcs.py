@@ -44,7 +44,7 @@ def modify_streamer_settings(path: str, mode: StreamerMode, new_entry: dict[str,
     save_to_file(path, settings)
 
 
-def modify_streamer_values(path: str, channel_name: str, field: str, new_value: int | str):
+def modify_streamer_values(path: str, channel_name: str, field: str, new_value: int | str | list):
     # Open the settings file and get contents
     settings = open_file(path, {})
 
@@ -61,6 +61,29 @@ def modify_streamer_values(path: str, channel_name: str, field: str, new_value: 
     # Save the updated dictionary back to the JSON file
     save_to_file(path, settings)
     print(f"Updated '{field}' for channel '{channel_name}' to {new_value}")
+
+
+# adding new settings parameter to a streamer channel
+##############################################################
+# NOT CURRENTLY BEING USED BUT COULD BE USEFUL IN THE FUTURE #
+##############################################################
+def add_streamer_values(path: str, channel_name: str, field: str, new_value: any):
+    # Open the settings file and get contents
+    settings = open_file(path, {})
+
+    # Check if the channel exists in settings, then update the specified field
+    if channel_name in settings:
+        if field not in settings[channel_name]:
+            settings[channel_name][field] = new_value  # Add the new field value
+        else:
+            print(
+                f"Field '{field}' already exists in the channel '{channel_name}'.")
+    else:
+        print(f"Channel '{channel_name}' does not exist in the settings.")
+
+    # Save the updated dictionary back to the JSON file
+    save_to_file(path, settings)
+    print(f"Added '{field}' for channel '{channel_name}' with value {new_value}")
 
 
 def check_user_exists(path: str, user: str) -> bool:
