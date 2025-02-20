@@ -236,9 +236,14 @@ class Bot(commands.Bot):
 
         # Get logger for the current channel
         logger = get_logger_for_channel(channel_name)
+        logger = get_logger_for_channel(ctx.channel.name)
+        is_in_bot_channel = ctx.channel.name == bot_nickname
+        channel_name = ctx.author.name if is_in_bot_channel else ctx.channel.name
 
         if not is_in_bot_channel and channel_name != ctx.author.name:
             await ctx.send(f'Please use the {bot_prefix}leave command in your own channel.')
+        if not is_in_bot_channel and channel_name != ctx.author.name:
+            await ctx.send('Please use the {bot_prefix}leave command in your own channel.')
             logger.warning(
                 f'Non-host trying to remove me from the channel {channel_name}.')
             return
