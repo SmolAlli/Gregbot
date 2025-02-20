@@ -125,6 +125,12 @@ class Bot(commands.Bot):
 
         syllable_lists = syllables_split(message.content)
 
+        # Ignore messages with single words that have less than 3 syllables (not including punctuation)
+        filtered_syllables = len([x for x in get_syllables_no_punctuation(syllable_lists[0]) if x != ''])
+        if len(syllable_lists) <= 1 and filtered_syllables < 3:
+            logger.info(f"Message of {message.content} too short")
+            return False
+
         # calc the number of replacements in the sentence
         butt_num = math.ceil(
             len(syllable_lists) / BUTT_REPLACEMENT_PER_SENTENCE)
@@ -149,12 +155,21 @@ class Bot(commands.Bot):
                 buttword = get_buttword_plural(
                     streamer_word_final, syllable_lists[random_word], random_syllable)
 
+                # Check the capitalisation
+                syll = syllable_lists[random_word][random_syllable]
+                if syll == syll.lower():
+                    syll = buttword
+                elif syll == syll[0].upper() + syll[1:].lower():
+                    syll = buttword[0].upper() + buttword[1:]
+                else:
+                    syll = buttword.upper()
+
+                syllable_lists[random_word][random_syllable] = syll
+
                 # Only log the word replacement once, not as word and syllable separately
                 logger.info(
-                    f"replaced syllable \'{syllable_lists[random_word][random_syllable]}\' in word \'{syllable_lists[random_word]}\' with \'{buttword}\' " +
+                    f"replaced syllable \'{syll}\' in word \'{syllable_lists[random_word]}\' with \'{buttword}\' " +
                     f"in the message \'{message.content}\' sent by {message.author.name}")
-
-                syllable_lists[random_word][random_syllable] = buttword
 
                 valid_butts += 1
 
@@ -243,7 +258,7 @@ class Bot(commands.Bot):
         if not is_in_bot_channel and channel_name != ctx.author.name:
             await ctx.send(f'Please use the {bot_prefix}leave command in your own channel.')
         if not is_in_bot_channel and channel_name != ctx.author.name:
-            await ctx.send('Please use the {bot_prefix}leave command in your own channel.')
+            await ctx.send(f'Please use the {bot_prefix}leave command in your own channel.')
             logger.warning(
                 f'Non-host trying to remove me from the channel {channel_name}.')
             return
@@ -341,7 +356,7 @@ class Bot(commands.Bot):
         else:
 
             if word is None or word.strip() == "" or word == "\U000e0000":
-                await ctx.channel.send('Make sure to include a word: !addword <word>')
+                await ctx.channel.send(f'Make sure to include a word: {bot_prefix}addword <word>')
             else:
 
                 # check if the user has permission to change the word
@@ -373,7 +388,7 @@ class Bot(commands.Bot):
                     logger.info(
                         f'{ctx.message.author} tried to add the word \'{word}\' to their random word list. Current word list: {settings["random_words_list"]}')
 
-    @commands.command(name="togglerandomwords")
+    @commands.command(name="togglerandomwords", aliases=["togglewords", "togglerandom"])
     async def toggleRandomWords(self, ctx: commands.Context):
         # Do command for the user's channel instead of channel done in if it's the bot's channel
         is_in_bot_channel, channel_name = in_bot_channel(bot_nickname, ctx.author.name, ctx.channel.name)
@@ -382,7 +397,7 @@ class Bot(commands.Bot):
         # let the user know of that instead
         if is_in_bot_channel and channel_name not in self.channel_settings:
             await ctx.channel.send(
-                'The bot has not joined your channel, do !join to have it join.')
+                f'The bot has not joined your channel, do {bot_prefix}join to have it join.')
         else:
             # Get logger for the current channel
             logger = get_logger_for_channel(channel_name)
@@ -400,7 +415,7 @@ class Bot(commands.Bot):
             if not settings["random_words_enabled"]:
                 settings["random_words_enabled"] = True
                 modify_streamer_values(JSON_DATA_PATH, channel_name, "random_words_enabled", True)
-                await ctx.channel.send(f'You have enabled random words{" for @" + channel_name if is_in_bot_channel else ""}. Add words using !addword <word> OR remove words using !removeword <word>.')
+                await ctx.channel.send(f'You have enabled random words{" for @" + channel_name if is_in_bot_channel else ""}. Add words using {bot_prefix}addword <word> OR remove words using {bot_prefix}removeword <word>.')
             # disable if enabled
             else:
                 settings["random_words_enabled"] = False
