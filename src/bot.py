@@ -169,7 +169,6 @@ class Bot(commands.Bot):
         if message.echo:
             return
 
-        print(message.content)
         # Make sure to not butt in the bot's channel
         if not channel_name == bot_nickname:
             # check if missed_messages has the channel name as a key
@@ -256,25 +255,22 @@ class Bot(commands.Bot):
             await ctx.send(f'The bot is not currently in {channel_name}\'s channel.')
 
     @commands.command(name="randomwords")
-    async def randomwords(self, ctx: commands.Context):
+    async def showRandomWordList(self, ctx: commands.Context):
 
         is_in_bot_channel, channel_name = in_bot_channel(bot_nickname, ctx.author.name, ctx.channel.name)
         # Get logger for the current channel
         logger = get_logger_for_channel(channel_name)
 
-        print("here")
         # check where the command is being sent and if the bot has already joined the sender's stream
         if is_in_bot_channel and channel_name not in self.channel_settings:
             await ctx.channel.send(
                 'The bot has not joined your channel, do !join to have it join.')
         else:
-            print("and here")
-            # check if the user has permission to use the command in the streamer's channel
-            if channel_name != ctx.author.name:
-                ("sometimes here")
-                logger.warning(
-                    f"{ctx.author.name} tried to check {channel_name}'s random word list.")
-                return
+            # # check if the user has permission to use the command in the streamer's channel
+            # if channel_name != ctx.author.name:
+            #     logger.warning(
+            #         f"{ctx.author.name} tried to check {channel_name}'s random word list.")
+            #     return
 
             # grab the streamer's settings
             settings = self.channel_settings.setdefault(
@@ -283,7 +279,7 @@ class Bot(commands.Bot):
             print(len(settings["random_words"]))
 
             if len(settings["random_words"]) == 0:
-                await ctx.channel.send(f'Your word list is empty.')
+                await ctx.channel.send(f'Word list is empty.')
             else:
                 await ctx.channel.send(f'Random Word List: {settings["random_words"]}')
 
@@ -299,8 +295,6 @@ class Bot(commands.Bot):
             await ctx.channel.send(
                 'The bot has not joined your channel, do !join to have it join.')
         else:
-            print("here")
-            print("word:", word)
             if word is None or word.strip() == "" or word == "\U000e0000":
                 await ctx.channel.send('Make sure to include a word: !addword <word>')
             else:
