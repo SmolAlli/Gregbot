@@ -423,8 +423,7 @@ class Bot(commands.Bot):
             logger.info(
                 f'Random words are now {"enabled" if settings["random_words_enabled"] else 'disabled'} for {channel_name}.')
 
-    @commands.command(name="buttrate", aliases=["rate", "setrate"])
-    async def buttrate(self, ctx: commands.Context, new_rate: int = None):
+    async def change_settings(self, ctx: commands.Context, value_type, value):
         # Do command for the user's channel instead of channel done in if it's the bot's channel
         is_in_bot_channel, channel_name = in_bot_channel(bot_nickname, ctx.author.name, ctx.channel.name)
 
@@ -439,54 +438,32 @@ class Bot(commands.Bot):
             settings = self.channel_settings.setdefault(
                 channel_name, DEFAULT_BUTT_INFO)
 
-            if new_rate is None:
-                await ctx.channel.send(f'The current rate for {channel_name}\'s channel is 1/{settings["rate"]}.')
-                logger.info(f"Checked rate: {settings['rate']}")
+            if value is None:
+                await ctx.channel.send(f'The current {value_type} for {channel_name}\'s channel is {f"1/{settings[value_type]}" if value_type == "rate" else settings[value_type]}.')
+                logger.info(f"Checked {value_type}: {settings[value_type]}")
             else:
                 if ctx.author.name != channel_name:
                     logger.warning(
-                        f'{ctx.author.name} tried to change the rate of {channel_name}')
+                        f'{ctx.author.name} tried to change the {value_type} of {channel_name}')
                     return
-                if LOWER_LIMIT_BUTTRATE <= new_rate <= UPPER_LIMIT_BUTTRATE:
-                    settings["rate"] = new_rate
-                    modify_streamer_values(
-                        JSON_DATA_PATH, ctx.author.name, "rate", new_rate)
-                    await ctx.channel.send(f'Rate{" for the channel" + channel_name if is_in_bot_channel else ""} changed to {new_rate}.')
-                else:
-                    await ctx.channel.send(
-                        f'{new_rate} is not a valid rate. Please choose a number between 10 and 1000.')
+
+                settings[value_type] = value
+                modify_streamer_values(
+                    JSON_DATA_PATH, ctx.author.name, value_type, value)
+                await ctx.channel.send(f'{value_type}{f" for the channel {channel_name}" if is_in_bot_channel else ""} changed to {value}.')
+
+    @commands.command(name="buttrate", aliases=["rate", "setrate"])
+    async def buttrate(self, ctx: commands.Context, new_rate: int = None):
+        value_type = "rate"
+        if new_rate is None or LOWER_LIMIT_BUTTRATE <= new_rate <= UPPER_LIMIT_BUTTRATE:
+            await self.change_settings(ctx, value_type, new_rate)
+        else:
+            await ctx.channel.send(f'{new_rate} is not a valid rate. Please choose a number between 10 and 1000.')
 
     @commands.command(name="buttword", aliases=["setword"])
     async def buttword(self, ctx: commands.Context, new_word: str = None):
-        # Do command for the user's channel instead of channel done in if it's the bot's channel
-        is_in_bot_channel, channel_name = in_bot_channel(bot_nickname, ctx.author.name, ctx.channel.name)
-
-        # If the user is in the bot's channel and checking for their own but has not joined the channel,
-        # let the user know of that instead
-        if is_in_bot_channel and channel_name not in self.channel_settings:
-            await ctx.channel.send(f'The bot has not joined your channel, do {bot_prefix}join to have it join.')
-        else:
-            # Get logger for the current channel
-            logger = get_logger_for_channel(channel_name)
-            settings = self.channel_settings.setdefault(
-                channel_name, DEFAULT_BUTT_INFO)
-            # if an argument isn't specified
-            if new_word is None:
-                await ctx.channel.send(f'The current word for the channel {channel_name} is {settings["word"]}.')
-            else:
-                # check if the user has permission to change the word
-                if channel_name != ctx.author.name:
-                    await ctx.channel.send('You can only change the word for your own channel.')
-                    logger.warning(
-                        f"{ctx.author.name} tried to change the word for {channel_name}")
-                    return
-                settings["word"] = new_word
-                modify_streamer_values(
-                    JSON_DATA_PATH, channel_name, "word", new_word)
-                await ctx.channel.send(f'Word {" for the channel" + channel_name if is_in_bot_channel else ""} changed to {new_word}.')
-
-                logger.info(
-                    f"Word changed to {settings['word']} for channel: {channel_name}")
+        value_type = "word"
+        await self.change_settings(ctx, value_type, new_word)
 
     @commands.command()
     async def ignoreme(self, ctx: commands.Context):
