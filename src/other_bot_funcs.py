@@ -1,4 +1,4 @@
-def in_bot_channel(botNickname: str, messageUserName: str, channelName: str) -> tuple[bool, str]:
+def in_bot_channel(bot_nickname: str, message_username: str, channel_name: str) -> tuple[bool, str]:
     """
     This function takes in three arguments: `botNickname`, `messageUserName`, and `channelName`.
 
@@ -15,7 +15,7 @@ def in_bot_channel(botNickname: str, messageUserName: str, channelName: str) -> 
     the `str` references the channel that the bot is connected to and will make changes to.
 
     """
-    is_in_bot_channel = channelName == botNickname
-    channel_name = messageUserName if is_in_bot_channel else channelName
+    is_in_bot_channel = channel_name == bot_nickname
+    channel_name = message_username if is_in_bot_channel else channel_name
 
     return is_in_bot_channel, channel_name
