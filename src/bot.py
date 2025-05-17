@@ -213,7 +213,14 @@ class Bot(commands.Bot):
 
         settings = self.channel_settings.get(channel_name)
 
-        syllable_lists = syllables_split(message.content)
+        content = message.content
+
+        # Remove @ from start of message if it is a reply
+        if message.tags.setdefault("reply-parent-display-name", None) is not None:
+            content = " ".join(message.content.split(" ")[1:])
+            print(content)
+
+        syllable_lists = syllables_split(content)
 
         # Ignore messages with single words that have less than 3 syllables (not including punctuation)
         filtered_syllables = len([x for x in get_syllables_no_punctuation(syllable_lists[0]) if x != ''])
@@ -475,7 +482,6 @@ class Bot(commands.Bot):
 
 
 def main():
-    print("test")
     if os.path.exists(JSON_DATA_PATH):
         with open(JSON_DATA_PATH, "r", encoding="utf8") as json_file:
             settings = json.load(json_file)
