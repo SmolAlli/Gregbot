@@ -4,6 +4,7 @@ import random
 import json
 from typing import Dict
 from dotenv import load_dotenv
+from twitchio import Message
 from twitchio.ext import commands  # type: ignore
 from json_funcs import modify_streamer_settings, modify_streamer_values, add_ignore_list, remove_ignore_list, open_file
 from ignore_these_words import IGNORE_WORDS
@@ -76,7 +77,7 @@ class Bot(commands.Bot):
     def increase_missed_messages(self, name):
         self.missed_messages[name] += 1
 
-    def find_valid_syllable(self, message, syllable_lists):
+    def find_valid_syllable(self, message: Message, syllable_lists: list[str]):
         # Get logger for the current channel
         logger = get_logger_for_channel(message.channel.name)
 
@@ -88,7 +89,12 @@ class Bot(commands.Bot):
                     syllable_lists[random_word])).lower() in IGNORE_WORDS:
                 continue
 
-            # Word is fine, continue forward
+            # Try to avoid links being replaced
+            if "https" in "".join(get_syllables_no_punctuation(
+                    syllable_lists[random_word])).lower():
+                continue
+
+                # Word is fine, continue forward
             break
         else:
             logger.warning(
@@ -200,7 +206,7 @@ class Bot(commands.Bot):
                     f'{value_type}{f" for the channel {channel_name}" if is_in_bot_channel else ""} ' +
                     f'changed to {value}.')
 
-    def find_buttwords(self, message):
+    def find_buttwords(self, message: Message):
         # Get logger for the current channel
         channel_name = message.channel.name
         logger = get_logger_for_channel(channel_name)
@@ -264,10 +270,10 @@ class Bot(commands.Bot):
         return syllable_lists
 
     async def event_message(self, message):
-        channel_name = message.channel.name
-
         if message.echo:
             return
+
+        channel_name = message.channel.name
 
         # Make sure to not butt in the bot's channel
         if not channel_name == bot_nickname:
@@ -289,6 +295,7 @@ class Bot(commands.Bot):
                 # ensure final_butt_rate is at least 1 otherwise random.randint will throw an error
                 final_butt_rate = max(butt_rate - max(self.missed_messages[channel_name] - butt_rate, 0), 1)
                 random_int = random.randint(1, final_butt_rate)
+                random_int = 1
 
                 if settings and random_int == 1:
                     butt_sentence = self.find_buttwords(message)
@@ -468,6 +475,7 @@ class Bot(commands.Bot):
 
 
 def main():
+    print("test")
     if os.path.exists(JSON_DATA_PATH):
         with open(JSON_DATA_PATH, "r", encoding="utf8") as json_file:
             settings = json.load(json_file)
