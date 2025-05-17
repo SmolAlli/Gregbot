@@ -23,6 +23,8 @@ load_dotenv()
 bot_access_token = os.environ.get('TMI_TOKEN')
 bot_nickname = os.environ.get('BOT_NICKNAME').lower()
 bot_prefix = os.environ.get('BOT_PREFIX')
+DEVMODE = os.environ.get("DEV")
+IS_BOT_DEV = DEVMODE is not None and DEVMODE != ""
 
 # JSON containing settings for each streamer
 JSON_DATA_PATH = "streamer_settings.json"
@@ -302,7 +304,8 @@ class Bot(commands.Bot):
                 # ensure final_butt_rate is at least 1 otherwise random.randint will throw an error
                 final_butt_rate = max(butt_rate - max(self.missed_messages[channel_name] - butt_rate, 0), 1)
                 random_int = random.randint(1, final_butt_rate)
-                random_int = 1
+                if IS_BOT_DEV:
+                    random_int = 1
 
                 if settings and random_int == 1:
                     butt_sentence = self.find_buttwords(message)
