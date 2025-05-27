@@ -8,7 +8,7 @@ s = pyphen.Pyphen(lang='en')
 REGEX = PUNCTUATION_REGEX + r"|" + LETTERS_REGEX + r"+"
 
 
-def syllables_split(sentence: str):
+def syllables_split(sentence: str) -> list[list[str]]:
     words = sentence.split()
     syllable_list = []
     for word in words:
@@ -18,7 +18,7 @@ def syllables_split(sentence: str):
             continue
 
         # Separate punctuation to be separate grammatically
-        syllables_punctuation = []
+        syllables_punctuation: list[str] = []
         for syllable in syllables:
             # Make sure syllable isn't empty
             if syllables == '':
@@ -36,7 +36,7 @@ def syllables_split(sentence: str):
     return syllable_list
 
 
-def syllables_to_sentence(syllable_lists):
+def syllables_to_sentence(syllable_lists) -> str:
     # Join each list of syllables back into words
     words = [''.join(syllables) for syllables in syllable_lists]
     sentence = ' '.join(words)  # Join words into a complete sentence

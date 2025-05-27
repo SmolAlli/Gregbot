@@ -79,7 +79,7 @@ class Bot(commands.Bot):
     def increase_missed_messages(self, name):
         self.missed_messages[name] += 1
 
-    def find_valid_syllable(self, message: Message, syllable_lists: list[str]):
+    def find_valid_syllable(self, message: Message, syllable_lists: list[str]) -> list[int] | bool:
         # Get logger for the current channel
         logger = get_logger_for_channel(message.channel.name)
 
@@ -208,7 +208,7 @@ class Bot(commands.Bot):
                     f'{value_type}{f" for the channel {channel_name}" if is_in_bot_channel else ""} ' +
                     f'changed to {value}.')
 
-    def find_buttwords(self, message: Message):
+    def find_buttwords(self, message: Message) -> list[list[str]] | bool:
         # Get logger for the current channel
         channel_name = message.channel.name
         logger = get_logger_for_channel(channel_name)
@@ -257,12 +257,12 @@ class Bot(commands.Bot):
 
                 # Check the capitalisation
                 syll = syllable_lists[random_word][random_syllable]
-                if syll == syll.lower():
+                if syll == syll.upper():
                     syll = buttword
                 elif syll == syll[0].upper() + syll[1:].lower():
                     syll = buttword[0].upper() + buttword[1:]
                 else:
-                    syll = buttword.upper()
+                    syll = buttword.lower()
 
                 syllable_lists[random_word][random_syllable] = syll
 
@@ -378,15 +378,7 @@ class Bot(commands.Bot):
         # check where the command is being sent and if the bot has already joined the sender's stream
         if is_in_bot_channel and channel_name not in self.channel_settings:
             await ctx.channel.send(f'The bot has not joined your channel, do {bot_prefix}join to have it join.')
-            return
         else:
-            # # check if the user has permission to use the command in the streamer's channel
-            # if channel_name != ctx.author.name:
-            #     logger.warning(
-            #         f"{ctx.author.name} tried to check {channel_name}'s random word list.")
-            #     return
-
-            # grab the streamer's settings
             settings = self.channel_settings.setdefault(
                 channel_name, DEFAULT_BUTT_INFO)
 
