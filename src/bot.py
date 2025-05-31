@@ -258,7 +258,7 @@ class Bot(commands.Bot):
                 # Check the capitalisation
                 syll = syllable_lists[random_word][random_syllable]
                 if syll == syll.upper():
-                    syll = buttword
+                    syll = buttword.upper()
                 elif syll == syll[0].upper() + syll[1:].lower():
                     syll = buttword[0].upper() + buttword[1:]
                 else:
