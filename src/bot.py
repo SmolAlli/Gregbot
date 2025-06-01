@@ -220,7 +220,7 @@ class Bot(commands.Bot):
         # Remove @ from start of message if it is a reply
         if message.tags.setdefault("reply-parent-display-name", None) is not None:
             content = " ".join(message.content.split(" ")[1:])
-            print(content)
+            # print(content)
 
         syllable_lists = syllables_split(content)
 
