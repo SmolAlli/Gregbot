@@ -475,6 +475,19 @@ class Bot(commands.Bot):
         else:
             await ctx.channel.send(f'User {user_to_ignore} is currently not ignored.')
 
+    @commands.command()
+    @commands.cooldown(1, 60, commands.Bucket.channel)
+    async def factory(self, ctx: commands.Context, amount: int = None):
+        if amount is None:
+            return
+        if 1 <= amount <= 20:
+            await ctx.channel.send(f'🏭 Generating {amount} gregs...')
+            await ctx.channel.send('greg ' * amount)
+        elif amount <= 0:
+            await ctx.channel.send(f"Can't generate gregs less than 1!")
+        else:
+            await ctx.channel.send(f"Generated too many gregs... the factory exploded!! greg EXPLOSION")
+
 
 def main():
     if os.path.exists(JSON_DATA_PATH):
